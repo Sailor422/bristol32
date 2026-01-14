@@ -1,0 +1,90 @@
+{
+  "super_ai_manager": {
+    "enabled": true,
+    "description": "Super AI Manager - Intelligent multi-agent orchestration system",
+    "default_mode": true,
+    "auto_analyze": true,
+    "parallel_processing": true,
+    "max_parallel_agents": 3,
+    "agent_selection": "intelligent",
+    "prompt_optimization": "agent_specific",
+    "result_synthesis": true
+  },
+  "agent_routing_rules": {
+    "web_search": {
+      "primary_agent": "gemini_agent",
+      "backup_agent": "research_agent",
+      "keywords": ["web", "search", "google", "internet", "online", "browse", "youtube", "video", "watch", "tutorial"]
+    },
+    "research": {
+      "primary_agent": "research_agent",
+      "backup_agent": "claude_agent",
+      "keywords": ["research", "investigate", "study", "analyze", "explore", "deep", "comprehensive"]
+    },
+    "coding": {
+      "primary_agent": "opencode_agent",
+      "backup_agent": "codex_agent",
+      "keywords": ["code", "program", "script", "function", "debug", "develop", "implement"]
+    },
+    "creative": {
+      "primary_agent": "claude_agent",
+      "backup_agent": "codex_agent",
+      "keywords": ["plan", "strategy", "optimize", "creative", "design", "complex", "reasoning"]
+    },
+    "general": {
+      "primary_agent": "ollama_agent",
+      "backup_agent": "codex_agent",
+      "keywords": ["local", "private", "offline", "quick", "general", "help"]
+    }
+  },
+  "agent_capabilities": {
+    "gemini_agent": {
+      "strengths": ["web_search", "youtube_search", "multimodal", "current_events", "direct_interface"],
+      "timeout": 600,
+      "parallel_safe": true
+    },
+    "research_agent": {
+      "strengths": ["information_gathering", "analysis", "documentation"],
+      "timeout": 180,
+      "parallel_safe": true
+    },
+    "opencode_agent": {
+      "strengths": ["coding", "debugging", "software_engineering"],
+      "timeout": 300,
+      "parallel_safe": false
+    },
+    "claude_agent": {
+      "strengths": ["creative_writing", "analysis", "direct_interface"],
+      "timeout": 180,
+      "parallel_safe": true
+    },
+    "ollama_agent": {
+      "strengths": ["local_processing", "privacy", "offline_work", "direct_interface"],
+      "timeout": 120,
+      "parallel_safe": true
+    },
+    "codex_agent": {
+      "strengths": ["chatgpt_integration", "direct_interface"],
+      "timeout": 180,
+      "parallel_safe": true
+    }
+  },
+  "orchestration_settings": {
+    "auto_route": true,
+    "multi_agent_support": true,
+    "fallback_agent": "ollama_agent",
+    "max_parallel_agents": 3,
+    "timeout_seconds": 300,
+    "result_synthesis": true,
+    "error_handling": "graceful",
+    "logging": true
+  },
+  "user_preferences": {
+    "default_mode": "super_ai_manager",
+    "show_agent_selection": true,
+    "show_prompt_optimization": false,
+    "show_timing": true,
+    "verbose_output": true,
+    "auto_save_results": false
+  }
+}

@@ -1,0 +1,2915 @@
+================================================================================
+DISTRIBUTED HUMAN DETECTION & ENVIRONMENT MONITORING SYSTEM
+FOR MARINE USE (ALARM & DOORBELL SYSTEM)
+================================================================================
+
+VESSEL: Bristol 32 "Liberty" (1974)
+CREATED: 2025-11-16
+PURPOSE: Intelligent perimeter monitoring, environmental sensing, and
+         security system using distributed ESP32 nodes with LoRa mesh network
+
+================================================================================
+1. SYSTEM ARCHITECTURE
+================================================================================
+
+1.1 OVERVIEW
+------------
+The system consists of multiple autonomous ESP32-based sensor nodes
+communicating via LoRa to a central hub. Each node operates independently
+while contributing to a coordinated security and monitoring network.
+
+NETWORK TOPOLOGY: Star with Hub-to-Hub Mesh Extension Capability
+- Primary: All nodes communicate with central hub (star topology)
+- Secondary: Nodes can relay messages for improved coverage (optional mesh)
+- Addressing: Each node has unique 8-bit ID (supports up to 255 nodes)
+
+1.2 NODE ROLES & PLACEMENT
+---------------------------
+
+NODE 1: COMPANIONWAY MONITOR (Priority: Critical)
+Location: Main companionway entrance
+Role: Primary doorbell and boarding detection
+Sensors:
+  - mmWave human presence (DFRobot SEN0395 or HLK-LD2410)
+  - BME280 (temp/humidity/pressure)
+  - Optional: PIR for wake-from-sleep
+  - Optional: Piezo button for manual doorbell
+Display: 2.4" TFT or e-ink (weather + alarm status)
+Special features:
+  - Adjustable detection zone to avoid false triggers from dock
+  - Two-stage alert (approach warning → entry alarm)
+  - Weatherproof enclosure rated IP65+
+
+NODE 2: FOREDECK PERIMETER (Priority: High)
+Location: Forward hatch or bow rail
+Role: Forward approach detection and weather monitoring
+Sensors:
+  - mmWave human presence (wide beam pattern)
+  - BME280
+  - Optional: UV sensor (VEML6075) for sun exposure
+Display: 1.8" TFT or OLED
+Special features:
+  - Lower sensitivity to reduce false positives from dock activity
+  - Anchor watch integration (future)
+  - Wind sensor input (anemometer)
+
+NODE 3: COCKPIT MONITOR (Priority: High)
+Location: Cockpit bulkhead or binnacle
+Role: Aft security, crew presence detection, environmental display
+Sensors:
+  - mmWave human presence
+  - BME280
+  - Optional: Light sensor (TSL2561) for day/night mode
+Display: 2.8" TFT (primary info display for crew)
+Special features:
+  - Crew presence detection (disables alarm when crew aboard)
+  - Large display for weather trends
+  - Physical buttons for arming/disarming system
+
+NODE 4: CABIN ENVIRONMENT (Priority: Medium)
+Location: Main salon or v-berth
+Role: Interior environmental monitoring, intrusion detection
+Sensors:
+  - mmWave human presence (reduced sensitivity for sleeping crew)
+  - BME280
+  - CO2 sensor (SCD40) - important for closed cabin ventilation
+  - Optional: VOC sensor (SGP30) for air quality
+Display: Small OLED or none (data viewed via hub)
+Special features:
+  - Ventilation alert if CO2 >1000ppm
+  - Humidity alert for mold prevention (>65% RH)
+  - Motion detection disabled during "sleep mode"
+
+NODE 5: ENGINE COMPARTMENT (Priority: Low)
+Location: Engine bay or lazarette
+Role: Fire/overheat detection, bilge monitoring
+Sensors:
+  - High-temp thermistor (up to 150°C)
+  - Humidity sensor
+  - Optional: Bilge float switch
+  - Optional: Fuel/oil vapor sensor (MQ-2)
+Display: None (LED status only)
+Special features:
+  - Temperature threshold alarm (>65°C)
+  - No human detection (confined space, false positives)
+  - Buzzer for local alarm
+
+1.3 CENTRAL HUB ARCHITECTURE
+-----------------------------
+
+Platform: Raspberry Pi Zero 2 W OR ESP32-S3 with larger display
+
+Rationale for RPi:
+  + More processing power for data logging
+  + Easy WiFi/internet integration
+  + Can run Node-RED or similar for automation
+  + USB storage for long-term logs
+  + Web interface for remote monitoring
+  - Higher power consumption (~2-3W)
+  - More complex setup
+
+Rationale for ESP32-S3:
+  + Lower power (<1W)
+  + Simpler, more robust (no OS to crash)
+  + Better for battery operation
+  + Native Arduino/ESP-IDF ecosystem
+  - Limited processing for complex logic
+  - Storage limited to SD card
+
+RECOMMENDATION: Start with ESP32-S3, migrate to RPi if advanced features needed
+
+Hub Hardware:
+  - ESP32-S3-DevKitC-1 or similar (dual-core, 8MB flash)
+  - 3.5" or 4.3" TFT touchscreen (ILI9488 or similar)
+  - LoRa module (SX1276/SX1278, 433MHz or 915MHz depending on region)
+  - microSD card slot for logging
+  - Real-time clock (DS3231) for accurate timestamps
+  - Buzzer and status LEDs
+  - Physical arming switch
+
+Hub Functions:
+  - Receive and log all node sensor data
+  - Coordinate alarm states (armed/disarmed/triggered)
+  - Display summary of all zones and environmental conditions
+  - Provide touchscreen interface for configuration
+  - Optional: NMEA 0183/2000 output for chart plotter integration
+  - Optional: WiFi AP for smartphone access
+  - Optional: MQTT bridge for IoT integration
+
+1.4 LORA NETWORK ORGANIZATION
+------------------------------
+
+Addressing Scheme:
+  - Hub: 0x00 (broadcast receiver)
+  - Nodes: 0x01 - 0xFE
+  - Broadcast: 0xFF
+
+Message Routing:
+  - Standard: Node → Hub (direct)
+  - Fallback: Node → Nearby Node → Hub (relay if weak signal)
+  - Broadcast: Hub → All Nodes (for commands/time sync)
+
+Network Roles:
+  - Hub: Master coordinator, time source, configuration manager
+  - Nodes: Autonomous sensors with local intelligence
+  - No node-to-node communication except relaying
+
+Time Synchronization:
+  - Hub broadcasts time every 10 minutes
+  - Nodes use RTC or millis() with periodic sync
+  - Timestamp all events for accurate logging
+
+================================================================================
+2. HUMAN DETECTION & DOORBELL/ALARM LOGIC
+================================================================================
+
+2.1 DETECTION TECHNOLOGY
+------------------------
+
+PRIMARY: mmWave Radar (60GHz or 24GHz)
+Recommended Modules:
+  - HLK-LD2410 (24GHz, inexpensive, good range)
+  - DFRobot SEN0395 (24GHz, better filtering)
+  - Seeed Studio MR60BHA1 (60GHz, high precision)
+
+Advantages over PIR for marine use:
+  + Not affected by temperature changes (deck heating in sun)
+  + Works through plastic enclosures
+  + Can measure distance to target
+  + Less sensitive to boat motion
+  + Adjustable detection zones
+
+Detection Zones (configurable per node):
+  - NEAR: 0-1m (immediate boarding area)
+  - MIDDLE: 1-3m (approach zone)
+  - FAR: 3-6m (perimeter)
+
+2.2 ALARM MODES
+---------------
+
+MODE 1: DISARMED
+- Human detection logged but no alarms triggered
+- Display shows "SYSTEM DISARMED"
+- Environmental monitoring active
+
+MODE 2: DOORBELL ONLY
+- Companionway node triggers gentle chime on detection
+- Other nodes log but don't alarm
+- Good for marina/dock use when expecting guests
+- Display shows "DOORBELL ACTIVE"
+
+MODE 3: PERIMETER ARMED (Night/Away)
+- All exterior nodes trigger alarm on detection
+- Interior nodes disabled (allow crew movement)
+- Escalating alert:
+  * First detection: Visual warning + quiet beep (10s grace period)
+  * Continued presence: Full alarm (buzzer + LoRa broadcast)
+- Display shows "PERIMETER ARMED"
+
+MODE 4: FULL ARMED (Away)
+- All nodes trigger alarm on ANY detection
+- Use when boat is unattended
+- No grace period
+- Display shows "FULL ARMED - AWAY"
+
+MODE 5: QUIET HOURS (Sleep)
+- Reduced sensitivity on exterior nodes
+- Interior nodes disabled
+- Doorbell switched to gentle vibration or silent notification to hub
+- Active 10pm - 6am (configurable)
+- Display shows "QUIET MODE"
+
+2.3 FALSE POSITIVE MITIGATION
+------------------------------
+
+Challenge: Boat environment has many motion sources
+  - Halyards and rigging moving in wind
+  - Fenders bumping against dock
+  - Boat rocking from waves or wake
+  - Birds landing on deck/rigging
+  - Flags or wind indicators
+  - Nearby boats/people on dock
+
+Solutions:
+
+1. DETECTION CONFIRMATION
+   - Require sustained presence for 2-3 seconds before triggering
+   - Ignore momentary "blips"
+   - Track detection confidence level (mmWave modules provide this)
+   - Require confidence >70% for alarm
+
+2. MULTI-SENSOR FUSION
+   - Combine mmWave with PIR for higher confidence
+   - Both sensors must agree before triggering (AND logic)
+   - OR use mmWave distance measurement: only alarm if target <4m AND moving toward boat
+
+3. MOTION STABILIZATION
+   - Use onboard IMU (MPU6050) to detect boat motion
+   - Temporarily increase detection threshold when boat is rocking
+   - Algorithm: If pitch/roll change >5° in 1 second, require higher mmWave confidence
+
+4. EXCLUSION ZONES
+   - Configure "dead zones" where detection is ignored
+   - Example: Neighboring boat's deck, dock walkway beyond 2m
+   - Use distance + angle data from mmWave to map exclusions
+
+5. ADAPTIVE THRESHOLDS
+   - Learn baseline "noise" level over first 24 hours
+   - Automatically adjust sensitivity
+   - Separate day/night thresholds
+
+6. MANUAL OVERRIDE
+   - Physical "SILENCE" button for 5 minutes
+   - Useful when loading groceries, doing maintenance, etc.
+   - Auto-re-arm after timeout
+
+2.4 DETECTION LOGIC FLOWCHART
+------------------------------
+
+┌─────────────────────┐
+│ mmWave detects      │
+│ presence in zone    │
+└──────────┬──────────┘
+           │
+           v
+     ┌─────────────┐
+     │ Confidence  │
+     │   > 70%?    │
+     └─────┬───┬───┘
+         NO│   │YES
+           │   │
+           │   v
+           │ ┌──────────────┐
+           │ │ Sustained    │
+           │ │ > 2 seconds? │
+           │ └─────┬───┬────┘
+           │     NO│   │YES
+           │       │   │
+           │       │   v
+           │       │ ┌────────────────┐
+           │       │ │ Check IMU:     │
+           │       │ │ Boat stable?   │
+           │       │ └────┬───┬───────┘
+           │       │    NO│   │YES
+           │       │      │   │
+           │       │      │   v
+           │       │      │ ┌──────────────────┐
+           │       │      │ │ Distance < 4m    │
+           │       │      │ │ & approaching?   │
+           │       │      │ └────┬───┬─────────┘
+           │       │      │    NO│   │YES
+           │       │      │      │   │
+           v       v      v      │   v
+         ┌───────────────────────┼───────────┐
+         │      IGNORE           │  TRIGGER  │
+         └───────────────────────┴───────────┘
+                                     │
+                                     v
+                          ┌──────────────────────┐
+                          │ Check alarm mode:    │
+                          │ - Disarmed: Log only │
+                          │ - Doorbell: Chime    │
+                          │ - Armed: ALARM!      │
+                          └──────────────────────┘
+
+2.5 DOORBELL FUNCTIONALITY
+---------------------------
+
+TRIGGER OPTIONS:
+1. Automatic: mmWave detection in companionway zone
+2. Manual: Physical button press
+3. Remote: LoRa message from handheld remote (future)
+
+DOORBELL SIGNALS:
+Local (at companionway node):
+  - Pleasant chime (not harsh alarm sound)
+  - LED pulses gently
+  - Display shows "VISITOR DETECTED"
+
+Remote (at hub + cockpit node):
+  - Hub plays doorbell sound + displays "VISITOR AT COMPANIONWAY"
+  - Cockpit node beeps gently + displays visitor icon
+  - All nodes receive LoRa message (for logging)
+
+Configurable Settings:
+  - Chime volume (0-10)
+  - Chime pattern (8 preset melodies)
+  - Repeat interval if presence continues (default: 30 seconds)
+  - Auto-disable after sunset (quiet hours)
+  - Sensitivity adjustment for detection distance
+
+DOORBELL VS ALARM DECISION TREE:
+  - If system mode = "Disarmed" or "Doorbell Only" → Doorbell
+  - If system mode = "Armed" and time = Quiet Hours → Silent notification to hub
+  - If system mode = "Armed" and detection sustained >5s → Escalate to alarm
+  - If manual button press → Always doorbell (never alarm)
+
+2.6 ALARM SIGNALING
+--------------------
+
+ESCALATION STAGES:
+
+STAGE 1: PRE-ALARM (5 second warning)
+  - Rapid beeping on detecting node
+  - Display flashes "MOTION DETECTED - DISARM NOW"
+  - LoRa message to hub: "PRE-ALARM NODE_ID"
+  - Hub displays countdown timer
+  - Purpose: Allow crew to disarm if accidentally triggered
+
+STAGE 2: FULL ALARM
+  - Continuous loud buzzer/siren (piezo 100dB+)
+  - All nodes flash LEDs rapidly
+  - All displays show "ALARM! ZONE: [NODE_NAME]"
+  - LoRa broadcast to all nodes
+  - Hub logs event with timestamp + node ID
+  - Optional: Send notification via WiFi/cellular (future)
+
+STAGE 3: PERSISTENT ALARM
+  - After 2 minutes, alarm shifts to intermittent (5s on, 5s off)
+  - Conserves power if running on battery
+  - Continues until manually disarmed
+  - Hub continues logging presence
+
+DISARM METHODS:
+1. Physical switch on hub
+2. Touchscreen PIN entry on hub (4-digit code)
+3. LoRa command from authorized node (cockpit monitor)
+4. Automatic timeout after 10 minutes (configurable, for false alarms)
+
+POST-ALARM:
+  - System enters "Disarmed" mode automatically
+  - Requires manual re-arming
+  - Logs review screen on hub shows last alarm details
+  - Prevents accidental re-triggering during investigation
+
+================================================================================
+3. ENVIRONMENTAL MONITORING & DISPLAY
+================================================================================
+
+3.1 SENSOR SPECIFICATIONS
+--------------------------
+
+TEMPERATURE & HUMIDITY & PRESSURE: Bosch BME280
+  - Range: -40°C to +85°C, 0-100% RH, 300-1100 hPa
+  - Accuracy: ±1°C, ±3% RH, ±1 hPa
+  - Interface: I2C or SPI
+  - Power: 3.6µA @ 1Hz sampling
+  - Note: All-in-one, highly accurate, marine-tested
+
+Alternative: BME680 (adds VOC/gas sensing)
+  - Useful for detecting engine exhaust, fuel leaks, mold
+
+SAMPLING INTERVALS:
+  - Temperature/Humidity: Every 60 seconds
+  - Barometric Pressure: Every 60 seconds
+  - Human Presence: Continuous (low power mode between detections)
+  - Additional sensors: Varies by type (see section 6)
+
+3.2 DATA FORMATTING FOR LORA TRANSMISSION
+------------------------------------------
+
+PACKET STRUCTURE (Efficient binary encoding):
+
+Standard Environmental Packet (12 bytes):
+  Byte 0:      Node ID (0x01 - 0xFE)
+  Byte 1:      Packet Type (0x01 = Environmental)
+  Byte 2-3:    Temperature (int16, °C * 100, e.g., 2350 = 23.50°C)
+  Byte 4-5:    Humidity (uint16, % * 100, e.g., 6520 = 65.20%)
+  Byte 6-7:    Pressure (uint16, hPa * 10, e.g., 10132 = 1013.2 hPa)
+  Byte 8-9:    Battery Voltage (uint16, mV, e.g., 3700 = 3.7V)
+  Byte 10:     RSSI (int8, signal strength)
+  Byte 11:     Checksum (XOR of bytes 0-10)
+
+Human Detection Event Packet (8 bytes):
+  Byte 0:      Node ID
+  Byte 1:      Packet Type (0x02 = Detection Event)
+  Byte 2:      Event Type (0x01=Approach, 0x02=Entry, 0x03=Doorbell)
+  Byte 3:      Confidence Level (0-100%)
+  Byte 4-5:    Distance (uint16, cm)
+  Byte 6:      Detection Zone (0=Near, 1=Middle, 2=Far)
+  Byte 7:      Checksum
+
+Alarm State Packet (6 bytes):
+  Byte 0:      Node ID (or 0x00 for hub broadcast)
+  Byte 1:      Packet Type (0x03 = Alarm Command)
+  Byte 2:      Command (0x01=Arm, 0x02=Disarm, 0x03=Trigger, 0x04=Silence)
+  Byte 3:      Mode (0=Disarmed, 1=Doorbell, 2=Perimeter, 3=Full, 4=Quiet)
+  Byte 4:      Target Node (0xFF = all nodes)
+  Byte 5:      Checksum
+
+Why Binary Encoding?
+  - LoRa has limited bandwidth (especially at long range)
+  - Binary is 3-5x smaller than ASCII/JSON
+  - Faster transmission = less power consumption
+  - More robust (less corruption risk)
+
+3.3 DISPLAY DESIGN
+------------------
+
+COMPANIONWAY NODE (2.4" TFT, 320x240):
+
+┌─────────────────────────────────────┐
+│ LIBERTY - COMPANIONWAY     [●]      │ ← Status indicator
+├─────────────────────────────────────┤
+│                                     │
+│  Temperature:    23.5°C    ↑       │ ← Trend arrow
+│  Humidity:       62%       →       │
+│  Pressure:       1013 hPa  ↓       │
+│                                     │
+│  Trend: Falling (Storm?)           │
+│                                     │
+├─────────────────────────────────────┤
+│ [DOORBELL]              [DISARMED] │ ← Mode indicator
+└─────────────────────────────────────┘
+
+COCKPIT NODE (2.8" TFT, 320x240) - Main Display:
+
+┌─────────────────────────────────────┐
+│ LIBERTY BOAT MONITOR    12:34 PM   │
+├──────────┬──────────┬───────────────┤
+│ COMPWAY  │ FOREDECK │ COCKPIT       │
+│  [OK]    │  [OK]    │  [ACTIVE]     │
+│  23.5°C  │  22.8°C  │  24.1°C       │
+├──────────┴──────────┴───────────────┤
+│                                     │
+│  CURRENT CONDITIONS:                │
+│  ━━━━━━━━━━━━━━━━━━━                │
+│  Temp:  24.1°C  (⬆ from 22.3°C)   │
+│  Humid: 65%     (stable)           │
+│  Baro:  1013hPa (⬇ 3hPa/3hr)      │
+│                                     │
+│  ⚠ Pressure falling - watch        │
+│     weather                        │
+│                                     │
+├─────────────────────────────────────┤
+│ [ARM] [SETTINGS] System: DISARMED  │
+└─────────────────────────────────────┘
+
+CABIN NODE (0.96" OLED, 128x64) - Minimal Display:
+
+┌────────────────┐
+│ CABIN          │
+│ 21.5°C  58%    │
+│ CO2: 650ppm    │
+│ [OK]           │
+└────────────────┘
+
+3.4 ALARM/DOORBELL STATUS INDICATORS
+-------------------------------------
+
+Visual Indicators on All Displays:
+
+┌──────────────┬────────────────────────────────┐
+│   Symbol     │  Meaning                       │
+├──────────────┼────────────────────────────────┤
+│   [●] Green  │  System OK, Disarmed           │
+│   [●] Yellow │  Doorbell Mode Active          │
+│   [●] Red    │  Armed - Perimeter or Full     │
+│   [●] Blue   │  Quiet Hours Mode              │
+│   [!] Flash  │  Pre-Alarm Warning             │
+│   [!!!]      │  ALARM TRIGGERED               │
+│   [?] Gray   │  Node Offline / No Signal      │
+└──────────────┴────────────────────────────────┘
+
+Trend Arrows (Barometric Pressure):
+  - ↑  Rising rapidly (>2 hPa/3hr) - Improving weather
+  - ↗  Rising slowly - Stable/improving
+  - →  Stable (±0.5 hPa/3hr)
+  - ↘  Falling slowly - Watch for changes
+  - ↓  Falling rapidly (>2 hPa/3hr) - Storm approaching!
+
+Audio Indicators:
+  - Single beep: Button press acknowledged
+  - Two beeps: Mode change confirmed
+  - Pleasant chime: Doorbell activation
+  - Rapid beeping: Pre-alarm warning
+  - Continuous siren: Full alarm
+  - Descending tone: System disarmed
+
+LED Indicators (Status LED on each node):
+  - Slow pulse (2s): Normal operation, disarmed
+  - Fast pulse (0.5s): Armed mode
+  - Solid: Doorbell/detection event
+  - Rapid flash: Alarm triggered
+  - Off: Node offline or power saving mode
+
+3.5 USER INTERFACE DESIGN
+--------------------------
+
+BUTTON CONTROLS (Companionway & Cockpit Nodes):
+
+Physical Buttons:
+  - BTN1: Mode cycle (Disarmed → Doorbell → Perimeter → Full → Quiet → repeat)
+  - BTN2: Display cycle (Weather → Trends → All Nodes → Settings)
+  - BTN3: Quick silence (stops local buzzer for 5 min)
+  - BTN1 + BTN2 (hold 3s): Enter settings menu
+
+Touch Display (Cockpit Node Only):
+  - Tap zone name to view detailed node info
+  - Tap "ARM" to cycle modes
+  - Tap "SETTINGS" for configuration menu
+  - Swipe down for notifications/log
+
+SETTINGS MENU (Accessible via Hub or Cockpit Node):
+  1. Alarm Sensitivity (Low / Medium / High)
+  2. Doorbell Volume (0-10)
+  3. Quiet Hours (On/Off + Time Range)
+  4. Detection Zones (Adjust distance thresholds)
+  5. Node Configuration (View/Edit node IDs, names)
+  6. WiFi Setup (for hub)
+  7. Time/Date
+  8. View Event Log
+  9. System Test (Test all nodes)
+  10. Factory Reset
+
+SCREEN ROTATION/TIMEOUT:
+  - Display dims after 30 seconds of inactivity (saves power)
+  - Wakes on: Button press, detection event, or LoRa message
+  - Brightness auto-adjusts based on ambient light (if light sensor present)
+  - Screen orientation locked to prevent rotation from boat motion
+
+WEATHER TREND GRAPH (Advanced - Cockpit/Hub Only):
+  - 24-hour pressure trend (line graph)
+  - Temperature high/low markers
+  - Predictive weather icons based on pressure trends:
+    * Rapid rise → Clearing skies
+    * Rapid fall → Storm warning
+    * Stable high → Fair weather
+    * Stable low → Overcast/rain
+
+================================================================================
+4. LORA COMMUNICATION DESIGN
+================================================================================
+
+4.1 LORA RADIO SETTINGS
+------------------------
+
+Frequency Selection:
+  - US/Americas: 915 MHz (ISM band)
+  - EU: 868 MHz
+  - Asia/Pacific: 433 MHz
+  Note: Higher frequency = smaller antenna, lower range
+        Lower frequency = longer range, longer antenna
+
+Recommended Module: SX1276 or SX1278 (LoRa chipset)
+  - Well-supported libraries (RadioHead, LoRa.h)
+  - Good range/power balance
+  - Inexpensive ($4-8 per module)
+
+OPTIMAL SETTINGS FOR BOAT ENVIRONMENT:
+
+Scenario: Bristol 32 sailboat (~32 feet / 10 meters)
+Max distance: ~30m (boat length + dock + some margin)
+Obstacles: Fiberglass hull, mast, rigging, metal fittings
+
+Configuration:
+  - Spreading Factor (SF): 7 or 8
+    * SF7: Faster, shorter range (~300m open air, ~50m through obstacles)
+    * SF8: Balanced (Good for boat - recommended)
+    * SF9-12: Slower, longer range (overkill for boat, wastes battery)
+
+  - Bandwidth: 125 kHz (standard)
+    * Wider = faster but less sensitive
+    * 125 kHz is sweet spot for <1km range
+
+  - Coding Rate: 4/5 (CR1)
+    * Light error correction
+    * Good balance between speed and reliability
+    * Marine environment has low interference
+
+  - Transmit Power: 14-17 dBm (25-50 mW)
+    * 17 dBm sufficient for boat-sized network
+    * 20 dBm (100mW) max for US without license
+    * Higher power = more battery drain
+
+  - Preamble Length: 8 symbols (standard)
+
+  - Sync Word: 0x12 (default, private network)
+
+Expected Performance with SF8, BW125, CR4/5:
+  - Data rate: ~3.125 kbps
+  - Time on air (12-byte packet): ~37ms
+  - Range: 100-200m line-of-sight
+  - Through-boat range: 40-60m (more than sufficient)
+  - Battery impact: ~120mA during TX (37ms), ~12mA RX listening
+
+4.2 MESSAGE FORMAT & PROTOCOL
+------------------------------
+
+MESSAGE STRUCTURE (LoRa RadioHead Library Format):
+
+┌──────────────────────────────────────────────────┐
+│  TO   │  FROM  │  ID   │  FLAGS │   PAYLOAD     │
+│ (1B)  │  (1B)  │ (1B)  │  (1B)  │  (1-250 B)    │
+└──────────────────────────────────────────────────┘
+
+  - TO: Destination address (0x00=Hub, 0xFF=Broadcast)
+  - FROM: Source node ID
+  - ID: Message sequence number (increments, detects lost packets)
+  - FLAGS: Reserved for future use (ACK request, priority, etc.)
+  - PAYLOAD: Actual data (see section 3.2 for packet types)
+
+PROTOCOL RULES:
+
+1. TRANSMISSION TIMING:
+   - Environmental data: Every 5 minutes (normal mode)
+   - Environmental data: Every 30 minutes (power save mode)
+   - Detection events: Immediate (within 100ms)
+   - Alarms: Immediate + repeat every 5s until acknowledged
+   - Heartbeat: Every 60 seconds (just node ID + battery voltage)
+
+2. COLLISION AVOIDANCE:
+   - Each node has assigned time slot in 60-second window:
+     * Node 1: Transmit at :00 seconds
+     * Node 2: Transmit at :12 seconds  (60/5 = 12s spacing for 5 nodes)
+     * Node 3: Transmit at :24 seconds
+     * Node 4: Transmit at :36 seconds
+     * Node 5: Transmit at :48 seconds
+   - Event messages (alarms, detections) use CSMA/CA:
+     * Listen before transmit
+     * Random backoff if channel busy
+     * Maximum 3 retry attempts
+
+3. ACKNOWLEDGMENT STRATEGY:
+   - Environmental data: No ACK needed (will send again in 5 min)
+   - Detection events: No ACK (logged anyway)
+   - Alarm triggers: Require ACK from hub within 2 seconds
+   - Configuration commands: Require ACK from target node
+
+   ACK Packet (3 bytes):
+     Byte 0: Node ID
+     Byte 1: 0xFF (ACK type)
+     Byte 2: Message ID being acknowledged
+
+4. LOST PACKET HANDLING:
+   - Hub tracks sequence numbers from each node
+   - Gap in sequence = lost packet
+   - Log warning: "Node X: Missed packet #123"
+   - If >5 consecutive packets lost: Alert "Node X: COMM FAILURE"
+   - Node status indicator changes to [?] on display
+
+   Recovery:
+     - Hub sends "Status Request" to node
+     - Node responds with current state
+     - Sequence number sync restored
+
+5. POWER-SAVING STRATEGIES:
+
+   NODES (Battery-Powered Operation):
+     - Sleep mode between transmissions
+     - Wake on: RTC alarm (scheduled TX), LoRa interrupt (incoming), sensor interrupt (detection)
+     - Deep sleep current: ~10µA (ESP32 + sensors)
+     - Active current: ~80mA (ESP32 + LoRa RX)
+     - TX current: ~120mA for ~40ms
+
+     Duty Cycle Example (5-minute reporting):
+       - Sleep: 299 seconds @ 10µA = 0.83 mAh
+       - Wake/process: 0.5s @ 80mA = 0.011 mAh
+       - TX: 0.04s @ 120mA = 0.001 mAh
+       - RX listen: 0.5s @ 12mA = 0.0017 mAh
+       Total per cycle: 0.84 mAh
+       Per day: 242 mAh
+       3000mAh battery: ~12 days between charges
+
+   OPPORTUNISTIC RX WINDOWS:
+     - Node wakes briefly every 5 seconds to check for incoming messages
+     - RX window: 100ms
+     - Allows hub to send commands without waiting for full 5-minute cycle
+     - Increases average power by ~5mA but improves responsiveness
+
+   HUB (Mains/Ship Power):
+     - Always listening (no sleep)
+     - Can respond to any node immediately
+
+4.3 LORA LIBRARY RECOMMENDATION
+--------------------------------
+
+OPTION 1: RadioHead (Reliable Datagram Manager)
+  + Mature, well-tested
+  + Built-in addressing, ACKs, retries
+  + Supports many radio modules
+  - Larger code size
+  - Slight overhead
+
+  Example Code:
+  ```cpp
+  #include <RH_RF95.h>
+  #include <RHReliableDatagram.h>
+
+  #define NODE_ADDRESS 0x01
+  #define HUB_ADDRESS 0x00
+
+  RH_RF95 rf95(SS_PIN, INT_PIN);
+  RHReliableDatagram manager(rf95, NODE_ADDRESS);
+
+  void sendEnvData(float temp, float humidity, uint16_t pressure) {
+    uint8_t data[12];
+    data[0] = NODE_ADDRESS;
+    data[1] = 0x01; // Environmental packet
+    // ... pack data ...
+    manager.sendtoWait(data, sizeof(data), HUB_ADDRESS);
+  }
+  ```
+
+OPTION 2: Arduino-LoRa Library (by Sandeep Mistry)
+  + Lightweight, simple
+  + Easy to learn
+  - No built-in addressing or ACKs (must implement manually)
+  - Good for learning or minimal systems
+
+  Example Code:
+  ```cpp
+  #include <LoRa.h>
+
+  void sendEnvData(float temp, float humidity, uint16_t pressure) {
+    LoRa.beginPacket();
+    LoRa.write(NODE_ADDRESS);
+    LoRa.write(0x01); // Packet type
+    // ... write data bytes ...
+    LoRa.endPacket();
+  }
+  ```
+
+RECOMMENDATION: Use RadioHead for production system
+  - Addressing and retries are critical for alarm reliability
+  - Saves development time
+  - Better for multi-node networks
+
+4.4 ANTENNA DESIGN
+------------------
+
+Frequency-Specific Antenna Lengths:
+
+915 MHz (US):
+  - 1/4 wave: 8.2 cm (most common, simple wire)
+  - 1/2 wave: 16.4 cm (better gain)
+  - Helical coil: 3-5 cm (compact, reduced range)
+
+868 MHz (EU):
+  - 1/4 wave: 8.6 cm
+  - 1/2 wave: 17.3 cm
+
+433 MHz (Asia/Pacific):
+  - 1/4 wave: 17.3 cm
+  - 1/2 wave: 34.6 cm
+
+Antenna Types for Marine Use:
+
+1. SIMPLE WIRE ANTENNA (Internal nodes):
+   - 1/4 wave wire soldered to ANT pin
+   - Ground plane improves performance (use PCB ground pour)
+   - Orientation: Vertical for best omnidirectional coverage
+   - Cost: $0 (use hookup wire)
+
+2. SPRING WHIP ANTENNA (External nodes):
+   - Flexible, won't snap in wind or when snagged
+   - SMA connector for easy replacement
+   - Better gain than wire (~2dBi vs 0dBi)
+   - Cost: $3-5 each
+   - Example: Linx ANT-916-SP
+
+3. RUBBER DUCK ANTENNA (Hub):
+   - Stubby, durable
+   - Moderate gain (2-3 dBi)
+   - Good omnidirectional pattern
+   - Cost: $5-10
+   - Example: Linx ANT-916-CW-RCS
+
+4. EXTERNAL MARINE ANTENNA (Optional, if range issues):
+   - Fiberglass whip rated for marine use
+   - Mount on stern rail or bimini frame
+   - 5-9 dBi gain
+   - Cost: $40-80
+   - Use quality coax (RG-58) with SMA adapter
+   - Only needed if nodes have trouble reaching hub
+
+ANTENNA PLACEMENT ON BOAT:
+  - Companionway node: Inside companionway, antenna pointed up
+  - Foredeck node: Under foredeck, antenna vertical through deck gland
+  - Cockpit node: Inside cockpit locker, antenna up through drain hole
+  - Cabin node: Overhead, antenna pointed toward center of boat
+  - Hub: Central location (nav station), antenna vertical for 360° coverage
+
+Avoid placing near:
+  - Metal mast or rigging (RF shielding)
+  - Large metal tanks (fuel, water)
+  - Engine block or batteries
+  - Other radio equipment (VHF, AIS, radar)
+
+4.5 RANGE TESTING & TROUBLESHOOTING
+------------------------------------
+
+FIELD TEST PROCEDURE:
+1. Set up hub at central location (nav station)
+2. Walk around boat with battery-powered test node
+3. Transmit every 5 seconds, log RSSI and SNR
+4. Map dead zones (behind mast, near engine, etc.)
+5. Adjust antenna placement or add relay node if needed
+
+RSSI Interpretation (Received Signal Strength Indicator):
+  - -30 to -50 dBm: Excellent (very close, overkill)
+  - -50 to -70 dBm: Very Good (typical for boat network)
+  - -70 to -90 dBm: Good (adequate, some margin)
+  - -90 to -110 dBm: Fair (usable but consider improving)
+  - < -110 dBm: Poor (increase SF or add relay)
+
+SNR Interpretation (Signal-to-Noise Ratio):
+  - >10 dB: Excellent, very clean signal
+  - 5-10 dB: Good, reliable communication
+  - 0-5 dB: Marginal, may have packet loss
+  - <0 dB: Poor, LoRa can decode but unreliable
+
+TROUBLESHOOTING TIPS:
+  - Weak signal? → Check antenna connection, try different orientation
+  - Intermittent? → Move away from metal or RF sources
+  - Packet loss? → Increase SF from 7 to 8, or reduce data rate
+  - No reception? → Verify frequency, check for correct wiring, test with known-good setup
+
+================================================================================
+5. CENTRAL HUB / CONTROLLER
+================================================================================
+
+5.1 HUB HARDWARE SPECIFICATION
+-------------------------------
+
+RECOMMENDED CONFIGURATION (ESP32-S3 Based):
+
+Core Components:
+  - ESP32-S3-DevKitC-1 (dual-core Xtensa LX7, 8MB flash, 8MB PSRAM)
+  - LoRa Module: RFM95W or SX1276 breakout (SPI interface)
+  - Display: 3.5" or 4.3" TFT touchscreen (ILI9488, SPI, 320x480)
+  - RTC: DS3231 precision RTC module (I2C, battery-backed)
+  - Storage: microSD card slot (SPI, for logging)
+  - Audio: Class D amplifier + 8Ω speaker (for alarms/doorbell)
+  - Power: LM2596 buck converter (12V → 5V, 3A) + LDO (5V → 3.3V, 1A)
+  - Indicators: RGB LED (status), buzzer/piezo (alarms)
+  - Controls: 3-position keyswitch (Disarm/Doorbell/Arm), 2 push buttons
+  - Enclosure: IP54-rated ABS case with clear front panel
+
+Optional Additions:
+  - WiFi antenna (external, for better range)
+  - Ethernet module (W5500) for wired network connection
+  - 4G/LTE module (SIM7600) for remote monitoring
+  - GPS module (for accurate time + anchor watch)
+
+Pin Assignments (ESP32-S3):
+  - SPI0 (LoRa):     MOSI=GPIO11, MISO=GPIO13, SCK=GPIO12, CS=GPIO10, INT=GPIO9
+  - SPI1 (Display):  MOSI=GPIO35, MISO=GPIO37, SCK=GPIO36, CS=GPIO34, DC=GPIO33, RST=GPIO21
+  - SPI2 (SD Card):  MOSI=GPIO40, MISO=GPIO41, SCK=GPIO39, CS=GPIO38
+  - I2C (RTC/BME):   SDA=GPIO8, SCL=GPIO7
+  - Touch (XPT2046): CS=GPIO42, INT=GPIO1
+  - Audio:           DAC=GPIO17 (PWM to amplifier input)
+  - Buttons:         BTN1=GPIO3, BTN2=GPIO4, Keyswitch=GPIO5+GPIO6 (two positions read)
+  - LED:             R=GPIO15, G=GPIO16, B=GPIO18
+
+Power Budget:
+  - ESP32-S3: ~200mA (WiFi active), ~80mA (WiFi off)
+  - Display: ~100mA (backlight full), ~20mA (backlight dim)
+  - LoRa RX: ~12mA
+  - LoRa TX: ~120mA (40ms bursts)
+  - RTC: 0.5mA
+  - SD card: ~20mA (write), ~5mA (idle)
+  - Audio amp: ~200mA (alarm), ~0mA (standby)
+  Total average: ~300mA @ 5V = 1.5W
+  Peak (alarm): ~600mA @ 5V = 3W
+
+5.2 HUB FUNCTIONS
+-----------------
+
+PRIMARY FUNCTIONS:
+
+1. DATA AGGREGATION
+   - Receive sensor data from all nodes
+   - Parse and validate incoming packets
+   - Store in RAM buffer (last 24 hours) + SD card (long-term)
+   - Calculate min/max/average values
+   - Detect anomalies (sudden changes, out-of-range values)
+
+2. ALARM COORDINATION
+   - Maintain global alarm state machine
+   - Respond to detection events based on current mode
+   - Broadcast mode changes to all nodes
+   - Enforce arming/disarming logic with PIN protection
+   - Log all alarm events with timestamps
+
+3. VISUALIZATION
+   - Display real-time data from all nodes
+   - Show system status (all nodes, battery levels, signal strength)
+   - Graphical weather trends (pressure, temperature)
+   - Alarm history and event log
+   - Touchscreen navigation
+
+4. CONFIGURATION MANAGEMENT
+   - Store node settings (IDs, names, sensitivity, zones)
+   - Distribute configuration updates via LoRa
+   - Backup/restore settings to SD card
+   - Factory reset capability
+
+5. COMMUNICATION GATEWAY
+   - Optional WiFi access point or client
+   - Web interface for remote monitoring (see 5.4)
+   - MQTT broker for IoT integration
+   - NMEA 0183 output (serial) for chart plotter
+   - Email/SMS alerts via internet connection (future)
+
+6. TIME SYNCHRONIZATION
+   - Maintain accurate time via RTC
+   - Broadcast time to nodes every 10 minutes
+   - Log events with precise timestamps
+   - Astronomical calculations (sunrise/sunset for auto quiet hours)
+
+SECONDARY FUNCTIONS:
+
+7. DIAGNOSTICS
+   - LoRa signal quality monitoring (RSSI/SNR for each node)
+   - Battery voltage tracking with low-battery alerts
+   - Communication failure detection
+   - Self-test mode (ping all nodes, verify sensors)
+
+8. AUTOMATION (Future)
+   - Rule-based actions: "If pressure drops >5hPa in 3hr, alert crew"
+   - Integration with boat systems: "If battery <12.0V, disable non-critical nodes"
+   - Geofencing: "Arm alarm when phone leaves boat (via WiFi/BT)"
+   - Schedule-based modes: "Auto-arm at midnight, disarm at 7am"
+
+5.3 HUB DISPLAY INTERFACE
+--------------------------
+
+MAIN SCREEN (Default View):
+
+┌───────────────────────────────────────────────┐
+│ LIBERTY BOAT MONITOR          12:34 PM        │
+│ ═════════════════════════════════════════════ │
+│                                               │
+│ ┌──────────┬──────────┬──────────┬─────────┐ │
+│ │COMPWAY   │FOREDECK  │COCKPIT   │CABIN    │ │
+│ │[●]       │[●]       │[●]       │[●]      │ │
+│ │23.5°C    │22.8°C    │24.1°C    │21.5°C   │ │
+│ │62% RH    │68% RH    │65% RH    │58% RH   │ │
+│ │-72 dBm   │-68 dBm   │-65 dBm   │-75 dBm  │ │
+│ └──────────┴──────────┴──────────┴─────────┘ │
+│                                               │
+│ CURRENT CONDITIONS (Cockpit Node):            │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Temperature:  24.1°C  (⬆ 1.8°C from 6h ago)  │
+│ Humidity:     65%     (→ stable)              │
+│ Pressure:     1013hPa (⬇ 3hPa/3hr)           │
+│                                               │
+│  ┌────────────────────────────────────────┐  │
+│  │  PRESSURE TREND (24hr)                 │  │
+│  │  1020├────┐                            │  │
+│  │      │    └─┐                          │  │
+│  │  1015│      └──┐                       │  │
+│  │      │         └──┐                    │  │
+│  │  1010│            └──────              │  │
+│  │      └────────────────────────────────>│  │
+│  │      12AM   6AM   12PM  6PM   12AM     │  │
+│  └────────────────────────────────────────┘  │
+│                                               │
+│ ⚠ ALERT: Pressure falling rapidly            │
+│          Watch for weather changes           │
+│                                               │
+├───────────────────────────────────────────────┤
+│ [ARM] [LOG] [SETTINGS]      Mode: DISARMED   │
+└───────────────────────────────────────────────┘
+
+NODE DETAIL SCREEN (Tap any node):
+
+┌───────────────────────────────────────────────┐
+│ ◄ BACK       COMPANIONWAY NODE                │
+│ ═════════════════════════════════════════════ │
+│                                               │
+│ Node ID: 0x01                                 │
+│ Name: Companionway Monitor                    │
+│ Status: Online                                │
+│ Last Contact: 15 seconds ago                  │
+│ Signal: -72 dBm (Good)                        │
+│ Battery: 3.8V (85%)                           │
+│                                               │
+│ SENSORS:                                      │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Temperature:  23.5°C                          │
+│   Min (24h): 19.2°C at 4:15 AM                │
+│   Max (24h): 26.8°C at 2:30 PM                │
+│                                               │
+│ Humidity: 62%                                 │
+│   Min (24h): 55% at 2:00 PM                   │
+│   Max (24h): 78% at 5:30 AM                   │
+│                                               │
+│ Pressure: 1013 hPa                            │
+│   Trend: Falling (-3 hPa in 3 hours)          │
+│                                               │
+│ Human Detection:                              │
+│   Mode: Doorbell Active                       │
+│   Sensitivity: Medium                         │
+│   Last Detection: 2 hours ago                 │
+│   Detection Count (24h): 12 events            │
+│                                               │
+├───────────────────────────────────────────────┤
+│ [CONFIGURE] [TEST] [VIEW HISTORY]            │
+└───────────────────────────────────────────────┘
+
+ALARM LOG SCREEN:
+
+┌───────────────────────────────────────────────┐
+│ ◄ BACK       ALARM & EVENT LOG                │
+│ ═════════════════════════════════════════════ │
+│                                               │
+│ 2025-11-16 08:23:45  DOORBELL: Companionway   │
+│ 2025-11-16 06:12:03  ALARM ARMED: Perimeter   │
+│ 2025-11-16 01:45:12  ALARM TRIGGERED: Foredeck│
+│   └─ 01:45:15  Alarm disarmed (PIN entered)   │
+│ 2025-11-15 22:30:00  QUIET MODE: Activated    │
+│ 2025-11-15 18:45:32  DOORBELL: Companionway   │
+│ 2025-11-15 14:22:10  SYSTEM TEST: All nodes OK│
+│ 2025-11-15 09:15:44  DOORBELL: Companionway   │
+│ 2025-11-15 07:00:00  SYSTEM DISARMED          │
+│                                               │
+│ Showing last 50 events                        │
+│                                               │
+├───────────────────────────────────────────────┤
+│ [EXPORT] [CLEAR LOG] [FILTER]                │
+└───────────────────────────────────────────────┘
+
+SETTINGS SCREEN:
+
+┌───────────────────────────────────────────────┐
+│ ◄ BACK       SYSTEM SETTINGS                  │
+│ ═════════════════════════════════════════════ │
+│                                               │
+│ ALARM SETTINGS:                               │
+│  Default Mode at Startup:     [Disarmed    ▼]│
+│  PIN Code:                    [****] [Change] │
+│  Pre-Alarm Duration:          [5 seconds   ▼]│
+│  Alarm Timeout:               [10 minutes  ▼]│
+│  Doorbell Volume:             [7] ─────●─────│
+│  Alarm Volume:                [10] ─────────●│
+│                                               │
+│ QUIET HOURS:                                  │
+│  Enable Quiet Hours:          [✓]             │
+│  Start Time:                  [22:00] [Set]   │
+│  End Time:                    [06:00] [Set]   │
+│                                               │
+│ NETWORK:                                      │
+│  WiFi:                        [Enabled]       │
+│  WiFi SSID:                   [LibertyBoat]   │
+│  WiFi Password:               [********]      │
+│  Web Interface:               [Enabled]       │
+│                                               │
+│ DISPLAY:                                      │
+│  Brightness:                  [8] ──────●────│
+│  Screen Timeout:              [30 seconds  ▼]│
+│  Temperature Units:           [Celsius     ▼]│
+│  Pressure Units:              [hPa         ▼]│
+│                                               │
+├───────────────────────────────────────────────┤
+│ [SAVE] [CANCEL] [FACTORY RESET]              │
+└───────────────────────────────────────────────┘
+
+5.4 WEB INTERFACE (OPTIONAL)
+-----------------------------
+
+Hub creates WiFi access point: "LibertyBoat" (password protected)
+Access via: http://192.168.4.1 from phone/tablet/laptop
+
+Web Dashboard Features:
+  - Live view of all nodes and sensors
+  - Real-time weather graphs
+  - Alarm control (arm/disarm via web)
+  - Event log with filtering
+  - System configuration
+  - Download logs as CSV
+  - OTA firmware updates
+
+Technology Stack:
+  - ESP32 WebServer library (lightweight)
+  - HTML/CSS/JavaScript (no external dependencies)
+  - WebSocket for live updates
+  - Responsive design for mobile
+
+Security:
+  - WPA2 password protection on WiFi
+  - HTTP Basic Authentication for web interface
+  - No internet exposure (local AP only)
+  - Optional: Expose via VPN for remote access
+
+5.5 INTEGRATION OPTIONS
+------------------------
+
+NMEA 0183 OUTPUT (Serial):
+  - Connect hub TX pin to chart plotter/MFD NMEA input
+  - Output custom sentences:
+    $PLIB,TEMP,24.1,C*XX   (Temperature)
+    $PLIB,BARO,1013.2,HPA*XX (Pressure)
+    $PLIB,ALRM,1,FOREDECK*XX (Alarm triggered)
+  - Update rate: 1Hz
+  - Baud: 4800 (NMEA standard)
+
+MQTT BROKER (for IoT platforms):
+  - Publish sensor data to topics:
+    liberty/companionway/temperature
+    liberty/companionway/humidity
+    liberty/alarm/state
+  - Subscribe to commands:
+    liberty/command/arm
+    liberty/command/disarm
+  - Use mosquitto or ESP32-based broker
+
+SIGNALK INTEGRATION (Modern marine standard):
+  - More structured than NMEA
+  - JSON-based data model
+  - Publish to SignalK server:
+    environment.inside.companionway.temperature
+    environment.outside.pressure
+    notifications.security.intruderAlert
+  - Enables integration with modern marine electronics
+
+HOME ASSISTANT / SMART HOME:
+  - MQTT Auto-Discovery for sensors
+  - Create automations:
+    "If alarm triggered, send notification to phone"
+    "If pressure drops rapidly, turn on nav lights"
+  - Voice control via Alexa/Google Assistant (via HA)
+
+ANCHOR WATCH INTEGRATION:
+  - Hub receives GPS position from chart plotter (NMEA input)
+  - Monitors position vs. anchor drop point
+  - Alerts if boat drifts >50m (configurable)
+  - Integrates with alarm system
+
+FUTURE: CELLULAR/SATELLITE ALERTS:
+  - Add SIM7600 4G module or RockBLOCK Iridium modem
+  - Send SMS/email on alarm trigger
+  - Remote monitoring when away from boat
+  - Requires data plan ($10-30/month)
+
+================================================================================
+6. ADDITIONAL BOAT-SPECIFIC SENSORS & FUNCTIONS
+================================================================================
+
+Beyond the core human detection and weather monitoring, the ESP32+LoRa platform
+can support many other critical boat systems:
+
+6.1 BILGE WATER LEVEL MONITORING
+---------------------------------
+
+Sensor Type: Float Switch (simple) or Ultrasonic/ToF Sensor (advanced)
+
+OPTION A: Float Switch (Simple, Reliable)
+  - Hardware: Reed switch + magnet float (e.g., Madison M5610)
+  - Connection: Digital input to ESP32 with internal pull-up
+  - Logic: HIGH = water detected, LOW = dry
+  - Advantages: Cheap ($5), no calibration, marine-rated
+  - Disadvantages: Binary (can't measure depth), mechanical failure
+
+OPTION B: Ultrasonic Distance Sensor (Advanced)
+  - Hardware: JSN-SR04T (waterproof ultrasonic, $8)
+  - Connection: Trigger/Echo pins to ESP32
+  - Logic: Measure distance to water surface, calculate depth
+  - Advantages: Continuous measurement, trend analysis
+  - Disadvantages: Requires mounting above bilge, calibration
+
+LoRa Message Format (4 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x10 (Bilge packet type)
+  Byte 2: Water level (0-255, 0=dry, 255=full)
+  Byte 3: Checksum
+
+Alerts:
+  - Level 1: Water detected (normal, bilge pump should handle)
+  - Level 2: Water above threshold (pump may be failing)
+  - Level 3: Bilge full (EMERGENCY - potential sinking)
+
+Placement: Engine compartment node or dedicated bilge node
+
+Why Critical: Early leak detection can prevent sinking
+
+6.2 BATTERY VOLTAGE & CURRENT MONITORING
+-----------------------------------------
+
+Sensor Type: INA219/INA226 Current/Voltage Sensor
+
+Hardware:
+  - INA226 breakout board (I2C, $8)
+  - Rated for 0-36V, ±20A (use shunt resistor for higher current)
+  - Measures voltage, current, and calculates power
+
+Connection:
+  - I2C to ESP32
+  - High-side: Battery positive
+  - Low-side: Load positive
+  - Shunt resistor: 0.1Ω, 2W (for 10A max) or 0.01Ω, 5W (for 50A max)
+
+LoRa Message Format (8 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x11 (Battery packet type)
+  Byte 2-3: Voltage (uint16, mV)
+  Byte 4-5: Current (int16, mA, negative = discharge)
+  Byte 6-7: Power (int16, W)
+
+Calculated Metrics:
+  - State of Charge (SOC): Estimate based on voltage curve
+  - Amp-hour consumption: Integrate current over time
+  - Time to empty: Ah remaining / current draw
+
+Alerts:
+  - Voltage <12.0V: Low battery (50% SOC for lead-acid)
+  - Voltage <11.5V: Critical battery (consider shutting down loads)
+  - Current >30A: Unusual draw (find source)
+  - Charging current <1A when shore power connected: Check charger
+
+Placement: Main battery bank (house batteries) + engine battery (separate node)
+
+Why Critical: Prevents dead batteries, monitors charging health, identifies parasitic loads
+
+6.3 ENGINE COMPARTMENT TEMPERATURE
+-----------------------------------
+
+Sensor Type: DS18B20 (Digital, 1-Wire) or High-Temp Thermistor
+
+OPTION A: DS18B20 (Recommended for most cases)
+  - Range: -55°C to +125°C
+  - Interface: 1-Wire (single data pin, multiple sensors)
+  - Accuracy: ±0.5°C
+  - Advantages: Digital (no ADC needed), multiple sensors on one pin
+  - Disadvantages: Limited to 125°C (adequate for most boat engines)
+
+OPTION B: K-Type Thermocouple + MAX6675 (High-Temperature)
+  - Range: 0°C to +1024°C
+  - Interface: SPI
+  - Use for exhaust manifold monitoring
+  - Advantages: Very high temperature capability
+  - Disadvantages: More expensive, requires amplifier
+
+LoRa Message Format (6 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x12 (Engine temp packet type)
+  Byte 2-3: Engine temp (int16, °C * 10)
+  Byte 4-5: Exhaust temp (int16, °C * 10) [if equipped]
+
+Alerts:
+  - Engine compartment >60°C: High temperature (check cooling)
+  - Engine compartment >80°C: CRITICAL (possible fire risk)
+  - Exhaust temp >200°C: Overheating (check raw water cooling)
+
+Placement: Engine compartment node (already planned, add DS18B20)
+
+Why Critical: Engine overheat detection, fire prevention
+
+6.4 LOCKER/LAZARETTE HUMIDITY (MOLD PREVENTION)
+------------------------------------------------
+
+Sensor: BME280 (same as weather monitoring)
+
+Placement: Inside lockers, lazarette, sail storage, chain locker
+
+LoRa Message: Same format as environmental packet (Section 3.2)
+
+Mold Risk Analysis:
+  - Humidity >70% for >6 hours: Mold growth risk
+  - Humidity >80%: High risk, immediate ventilation needed
+  - Temperature 15-25°C + high humidity: Ideal mold conditions
+
+Alerts:
+  - "Aft locker: Humidity 75% for 8 hours - ventilate"
+  - "Chain locker: Mold risk - run fan or open hatch"
+
+Automation Ideas:
+  - Trigger exhaust fan if humidity >75%
+  - Alert crew to open hatches on sunny days
+  - Track trend to identify leaks (sudden humidity spike)
+
+Why Critical: Prevents mold/mildew damage to sails, cushions, clothing
+
+6.5 HATCH/DOOR OPEN/CLOSE SENSORS
+----------------------------------
+
+Sensor Type: Magnetic Reed Switch
+
+Hardware:
+  - Reed switch on frame, magnet on moving part
+  - Wired or wireless (ESP32 with LoRa in each hatch is overkill)
+  - Better: Use I2C GPIO expander (MCP23017) on nearest node
+
+Monitored Openings:
+  - Main companionway hatch
+  - Forward hatch
+  - Cabin ports (opening portholes)
+  - Lazarette/cockpit lockers
+  - Engine compartment door
+
+LoRa Message Format (3 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x13 (Hatch status packet type)
+  Byte 2: Bitmask (bit 0=companionway, bit 1=forward hatch, etc.)
+          1=open, 0=closed
+
+Alerts:
+  - "Forward hatch open + rain detected" → Alert to close
+  - "Hatch opened while armed" → Intrusion alarm
+  - "Engine compartment open for >1 hour" → Reminder to close
+
+Integration with Weather:
+  - If pressure dropping rapidly + hatches open → Suggest closing
+  - If humidity rising + hatches closed → Suggest opening for ventilation
+
+Why Critical: Prevents flooding from rain/spray, security, energy efficiency (cabin temp control)
+
+6.6 GPS-BASED ANCHOR DRIFT MONITORING
+--------------------------------------
+
+Sensor: GPS Module (NEO-6M or NEO-M8N)
+
+Connection:
+  - UART to ESP32
+  - Parse NMEA sentences (GPGGA for position)
+
+Anchor Watch Logic:
+  1. When anchor drops, record GPS position (lat/lon)
+  2. Set drift radius (default: 50m, configurable 20-100m)
+  3. Poll GPS every 60 seconds
+  4. Calculate distance from anchor point using Haversine formula
+  5. If distance > radius: ALARM
+
+LoRa Message Format (12 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x14 (Anchor packet type)
+  Byte 2-5: Latitude (int32, degrees * 1e7)
+  Byte 6-9: Longitude (int32, degrees * 1e7)
+  Byte 10-11: Drift distance (uint16, meters)
+
+Alerts:
+  - "Anchor drift detected: 35m from drop point"
+  - "Anchor watch active: Position stable"
+
+Advanced Features:
+  - Swing circle visualization on hub display
+  - Tide/current compensation (wider radius at peak tide change)
+  - Integration with weather alerts (increase radius in storm)
+
+Placement: Hub (central location) or dedicated GPS node
+
+Why Critical: Prevents dragging anchor and grounding
+
+6.7 WIND SPEED & DIRECTION (ANEMOMETER)
+----------------------------------------
+
+Sensor Type: Davis 6410 Anemometer or DIY Hall-Effect
+
+OPTION A: Davis 6410 (Professional, $100)
+  - Cup anemometer (wind speed) + vane (direction)
+  - Reed switch output (pulse per rotation)
+  - Hall effect sensor for direction (8 positions)
+  - Advantages: Accurate, marine-rated, widely used
+  - Disadvantages: Expensive, requires mast-top mounting
+
+OPTION B: DIY Hall Effect + Magnet
+  - 3D-printed cups with embedded magnet
+  - Hall effect sensor counts rotations
+  - Wind vane with potentiometer for direction
+  - Advantages: Cheap ($10), customizable
+  - Disadvantages: Less accurate, calibration required
+
+Connection:
+  - Wind speed: Interrupt pin (count pulses per second)
+  - Wind direction: Analog pin or I2C compass (HMC5883L)
+
+LoRa Message Format (6 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x15 (Wind packet type)
+  Byte 2-3: Wind speed (uint16, knots * 10)
+  Byte 4-5: Wind direction (uint16, degrees)
+
+Calculations:
+  - Speed (knots) = pulses_per_second * calibration_factor
+  - Gust detection: Track max speed in 10-second window
+  - Beaufort scale classification (0-12)
+
+Alerts:
+  - Wind >20 knots: Strong breeze (consider reefing)
+  - Wind >30 knots: Gale warning (seek shelter)
+  - Sudden wind shift >90°: Squall or front passing
+
+Integration:
+  - Display on cockpit node (visible while sailing)
+  - Log for weather analysis
+  - Trigger anchor watch alert if wind >25 knots
+
+Placement: Mast top (best) or stern rail (acceptable)
+
+Why Critical: Sailing safety, weather monitoring, anchor watch
+
+6.8 AC SHORE POWER MONITOR
+---------------------------
+
+Sensor: ACS712 Current Sensor (AC) + Voltage Divider
+
+WARNING: AC power is dangerous. Use isolated sensor or qualified electrician.
+
+Hardware:
+  - ACS712-30A (Hall-effect AC current sensor, isolated)
+  - Voltage divider with optocoupler (for 120/240V AC measurement)
+  - Zero-crossing detection for power factor calculation
+
+Measurements:
+  - AC voltage (RMS)
+  - AC current (RMS)
+  - Power (watts) = V * I * power_factor
+  - Energy consumption (kWh, integrated over time)
+
+LoRa Message Format (10 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x16 (Shore power packet type)
+  Byte 2-3: Voltage (uint16, volts * 10)
+  Byte 4-5: Current (uint16, amps * 100)
+  Byte 6-7: Power (uint16, watts)
+  Byte 8-9: Energy (uint16, Wh since last reset)
+
+Alerts:
+  - "Shore power disconnected" (voltage dropped to 0)
+  - "Overload: Drawing 28A on 30A circuit" (approaching breaker limit)
+  - "Low voltage: 105V detected" (possible brownout)
+
+Why Critical: Prevents overloading shore power, monitors charging system, detects disconnection
+
+6.9 FUEL TANK LEVEL
+--------------------
+
+Sensor Type: Resistive Sender (standard) or Ultrasonic
+
+OPTION A: Resistive Sender (Standard boat fuel gauges)
+  - Resistance varies with float position (typically 240Ω empty, 33Ω full)
+  - Measure with ADC + voltage divider
+  - Advantages: Uses existing tank sender
+  - Disadvantages: Nonlinear, needs calibration
+
+OPTION B: Ultrasonic (Retrofit)
+  - JSN-SR04T waterproof ultrasonic
+  - Mount in tank top, measure distance to fuel surface
+  - Advantages: No modification to tank
+  - Disadvantages: Accuracy affected by fuel type (different sound speeds)
+
+LoRa Message Format (4 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x17 (Fuel packet type)
+  Byte 2: Fuel level (uint8, percentage 0-100%)
+  Byte 3: Estimated range (uint8, nautical miles, based on average consumption)
+
+Alerts:
+  - Fuel <25%: "Low fuel - 15 NM range remaining"
+  - Fuel <10%: "CRITICAL - Refuel immediately"
+  - Sudden drop: "Possible fuel leak detected"
+
+Consumption Tracking:
+  - Integrate fuel level change with GPS speed
+  - Calculate gallons/hour and miles/gallon
+  - Estimate range based on current consumption
+
+Why Critical: Prevents running out of fuel, detects leaks
+
+6.10 PROPANE/LPG GAS DETECTOR
+------------------------------
+
+Sensor: MQ-5 or MQ-6 (LPG/propane specific)
+
+WARNING: Propane is heavier than air and accumulates in bilge - VERY DANGEROUS
+
+Hardware:
+  - MQ-6 sensor module (analog output)
+  - Mount low in bilge or near propane locker
+  - Requires 5V heater supply (uses ~150mA)
+
+Detection Levels:
+  - 0-200 ppm: Safe
+  - 200-1000 ppm: Caution (small leak)
+  - >1000 ppm: DANGER (explosive levels, shut off gas)
+
+LoRa Message Format (4 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x18 (Gas packet type)
+  Byte 2-3: PPM (uint16, 0-10000 ppm)
+
+Alerts:
+  - >200 ppm: "Propane leak detected - check connections"
+  - >1000 ppm: "DANGER: HIGH GAS LEVELS - EVACUATE & VENTILATE"
+
+Safety Integration:
+  - Trigger ventilation fan automatically
+  - Sound loud alarm (different from intrusion alarm)
+  - Optional: Solenoid valve to shut off propane supply
+
+Why Critical: Life safety - prevents explosion/fire
+
+6.11 WATER TANK LEVEL
+----------------------
+
+Sensor: Ultrasonic or Capacitive
+
+Similar to fuel tank (6.9), but for fresh water
+
+LoRa Message: Same format as fuel, different packet type (0x19)
+
+Additional Feature: Consumption tracking
+  - Monitor daily water usage (gallons/day)
+  - Estimate days remaining
+  - Alert if unusual consumption (possible leak)
+
+Why Critical: Prevents running out of fresh water on passage
+
+6.12 LIGHTNING DETECTOR
+------------------------
+
+Sensor: AS3935 Franklin Lightning Sensor
+
+Hardware:
+  - AS3935 module (I2C or SPI, $15)
+  - Detects electromagnetic signature of lightning
+  - Estimates distance (1-40 km)
+
+LoRa Message Format (4 bytes):
+  Byte 0: Node ID
+  Byte 1: 0x1A (Lightning packet type)
+  Byte 2: Distance (uint8, km)
+  Byte 3: Energy level (uint8, 0-255)
+
+Alerts:
+  - "Lightning detected 15 km away - monitor storm"
+  - "Lightning within 5 km - SEEK SHELTER"
+  - Storm tracking: Count strikes over time
+
+Integration:
+  - Combine with barometric pressure trends
+  - Auto-close hatches alert
+  - Disable non-essential electronics (protect from surge)
+
+Why Critical: Advance warning of severe weather, safety
+
+6.13 INTEGRATED SENSOR NODE EXAMPLE
+------------------------------------
+
+Example: "Engine Compartment Multi-Sensor Node"
+
+Hardware:
+  - ESP32-C3 (low cost, sufficient for sensors)
+  - LoRa SX1276
+  - DS18B20 (engine temperature)
+  - BME280 (compartment temp/humidity/pressure)
+  - INA226 (battery voltage/current)
+  - Float switch (bilge)
+  - MQ-2 (fuel/oil vapor)
+  - 12V to 5V buck converter
+  - Buzzer (local alarm)
+  - Status LED
+
+Functions:
+  - Monitor engine temperature (overheat detection)
+  - Detect fuel/oil vapors (leak/fire risk)
+  - Track battery charging (when engine running)
+  - Bilge water detection
+  - Environmental conditions
+
+LoRa Traffic:
+  - Every 5 minutes: Send all sensor readings (18-byte packet)
+  - On alarm: Immediate transmission (overheat, vapor, bilge water)
+
+Power: 12V boat power (always on)
+
+Cost: ~$35 in components
+
+================================================================================
+7. FIRMWARE & SOFTWARE STRUCTURE
+================================================================================
+
+7.1 NODE FIRMWARE ARCHITECTURE
+-------------------------------
+
+MODULAR DESIGN PRINCIPLES:
+  - Sensor drivers as independent classes
+  - LoRa communication abstraction layer
+  - State machine for alarm logic
+  - Configuration stored in EEPROM/Flash
+  - Over-the-air update capability
+
+HIGH-LEVEL FIRMWARE STRUCTURE:
+
+```cpp
+// File: node_firmware.ino
+
+#include <Arduino.h>
+#include <RH_RF95.h>
+#include <RHReliableDatagram.h>
+#include <Wire.h>
+#include "sensors/BME280Sensor.h"
+#include "sensors/HumanDetector.h"
+#include "display/DisplayManager.h"
+#include "lora/LoRaComm.h"
+#include "config/NodeConfig.h"
+
+// Global objects
+NodeConfig config;
+LoRaComm lora;
+BME280Sensor envSensor;
+HumanDetector motionSensor;
+DisplayManager display;
+
+// State machine states
+enum SystemState {
+  STATE_INIT,
+  STATE_NORMAL,
+  STATE_ALARM_TRIGGERED,
+  STATE_SLEEP,
+  STATE_ERROR
+};
+
+SystemState currentState = STATE_INIT;
+
+void setup() {
+  Serial.begin(115200);
+
+  // Load configuration from flash
+  config.load();
+
+  // Initialize I2C bus
+  Wire.begin(SDA_PIN, SCL_PIN);
+
+  // Initialize sensors
+  if (!envSensor.begin()) {
+    Serial.println("BME280 init failed");
+    currentState = STATE_ERROR;
+  }
+
+  if (!motionSensor.begin()) {
+    Serial.println("Motion sensor init failed");
+  }
+
+  // Initialize LoRa
+  lora.begin(config.nodeID, config.hubID);
+  lora.setFrequency(915.0); // US frequency
+  lora.setTxPower(17);
+  lora.setSpreadingFactor(8);
+
+  // Initialize display
+  display.begin();
+  display.showBootScreen(config.nodeName);
+
+  // Send boot message
+  lora.sendBootNotification();
+
+  currentState = STATE_NORMAL;
+}
+
+void loop() {
+  static unsigned long lastEnvRead = 0;
+  static unsigned long lastLoRaTx = 0;
+  static unsigned long lastDisplayUpdate = 0;
+
+  unsigned long now = millis();
+
+  // Check for incoming LoRa messages
+  lora.processIncoming();
+
+  // State machine
+  switch (currentState) {
+
+    case STATE_NORMAL:
+      // Read environmental sensors every 60 seconds
+      if (now - lastEnvRead >= 60000) {
+        envSensor.read();
+        lastEnvRead = now;
+      }
+
+      // Check for human detection
+      if (motionSensor.detectionEvent()) {
+        handleDetection();
+      }
+
+      // Send LoRa data every 5 minutes
+      if (now - lastLoRaTx >= 300000) {
+        sendEnvironmentalData();
+        lastLoRaTx = now;
+      }
+
+      // Update display every 1 second
+      if (now - lastDisplayUpdate >= 1000) {
+        updateDisplay();
+        lastDisplayUpdate = now;
+      }
+
+      // Check for sleep mode conditions
+      if (shouldEnterSleep()) {
+        enterSleepMode();
+      }
+      break;
+
+    case STATE_ALARM_TRIGGERED:
+      soundAlarm();
+      lora.sendAlarmTrigger();
+      // Wait for disarm command...
+      break;
+
+    case STATE_SLEEP:
+      // Deep sleep with periodic wake
+      esp_sleep_enable_timer_wakeup(300 * 1000000); // 5 minutes
+      esp_light_sleep_start();
+      currentState = STATE_NORMAL;
+      break;
+
+    case STATE_ERROR:
+      display.showError();
+      delay(1000);
+      break;
+  }
+
+  // Check battery voltage
+  if (now % 60000 == 0) { // Every minute
+    checkBatteryLevel();
+  }
+}
+
+void handleDetection() {
+  DetectionEvent event = motionSensor.getEvent();
+
+  // Apply filtering logic (see section 2.3)
+  if (!validateDetection(event)) {
+    return; // False positive, ignore
+  }
+
+  // Determine response based on mode
+  AlarmMode mode = config.getAlarmMode();
+
+  if (mode == MODE_DISARMED) {
+    // Log only
+    Serial.println("Detection (disarmed mode)");
+  }
+  else if (mode == MODE_DOORBELL) {
+    playDoorbellChime();
+    lora.sendDoorbellEvent();
+    display.showVisitor();
+  }
+  else if (mode == MODE_ARMED_PERIMETER || mode == MODE_ARMED_FULL) {
+    currentState = STATE_ALARM_TRIGGERED;
+  }
+}
+
+void sendEnvironmentalData() {
+  EnvData data;
+  data.nodeID = config.nodeID;
+  data.temperature = envSensor.getTemperature();
+  data.humidity = envSensor.getHumidity();
+  data.pressure = envSensor.getPressure();
+  data.batteryVoltage = getBatteryVoltage();
+
+  lora.sendEnvironmentalPacket(data);
+}
+
+void updateDisplay() {
+  display.clear();
+  display.drawHeader(config.nodeName, config.getAlarmMode());
+  display.drawTemperature(envSensor.getTemperature());
+  display.drawHumidity(envSensor.getHumidity());
+  display.drawPressure(envSensor.getPressure());
+  display.drawStatusIcon(getSystemStatus());
+  display.refresh();
+}
+
+bool validateDetection(DetectionEvent event) {
+  // Implement false-positive filtering (Section 2.3)
+
+  // 1. Check confidence level
+  if (event.confidence < 70) {
+    return false;
+  }
+
+  // 2. Check sustained presence
+  if (event.duration < 2000) { // Less than 2 seconds
+    return false;
+  }
+
+  // 3. Check boat motion (if IMU available)
+  if (imuAvailable && getBoatMotion() > MOTION_THRESHOLD) {
+    // Boat rocking, increase confidence requirement
+    if (event.confidence < 85) {
+      return false;
+    }
+  }
+
+  // 4. Check distance (must be approaching and within range)
+  if (event.distance > 400 || event.distance < 0) { // Outside 0-4m
+    return false;
+  }
+
+  return true; // Valid detection
+}
+
+// Additional functions...
+```
+
+7.2 SENSOR ABSTRACTION LAYER
+-----------------------------
+
+Each sensor type has a class interface for easy swapping/testing:
+
+```cpp
+// File: sensors/SensorBase.h
+
+class SensorBase {
+public:
+  virtual bool begin() = 0;
+  virtual bool read() = 0;
+  virtual bool isAvailable() = 0;
+  virtual String getStatusString() = 0;
+};
+
+// File: sensors/BME280Sensor.h
+
+#include <Adafruit_BME280.h>
+#include "SensorBase.h"
+
+class BME280Sensor : public SensorBase {
+private:
+  Adafruit_BME280 bme;
+  float temperature;
+  float humidity;
+  float pressure;
+
+public:
+  bool begin() override {
+    return bme.begin(0x76); // I2C address
+  }
+
+  bool read() override {
+    temperature = bme.readTemperature();
+    humidity = bme.readHumidity();
+    pressure = bme.readPressure() / 100.0; // Pa to hPa
+    return true;
+  }
+
+  bool isAvailable() override {
+    return bme.sensorID() == 0x60; // BME280 chip ID
+  }
+
+  float getTemperature() { return temperature; }
+  float getHumidity() { return humidity; }
+  float getPressure() { return pressure; }
+
+  String getStatusString() override {
+    return String(temperature, 1) + "C " + String(humidity, 0) + "% " + String(pressure, 0) + "hPa";
+  }
+};
+
+// File: sensors/HumanDetector.h
+
+class HumanDetector : public SensorBase {
+private:
+  int rxPin, txPin;
+  bool presenceDetected;
+  int distance; // cm
+  int confidence; // 0-100%
+
+public:
+  HumanDetector(int rx, int tx) : rxPin(rx), txPin(tx) {}
+
+  bool begin() override {
+    Serial2.begin(115200, SERIAL_8N1, rxPin, txPin); // HLK-LD2410 uses UART
+    // Send configuration commands...
+    return true;
+  }
+
+  bool read() override {
+    // Parse UART data from mmWave sensor
+    // Update presenceDetected, distance, confidence
+    return true;
+  }
+
+  bool detectionEvent() {
+    read();
+    return presenceDetected;
+  }
+
+  DetectionEvent getEvent() {
+    DetectionEvent event;
+    event.detected = presenceDetected;
+    event.distance = distance;
+    event.confidence = confidence;
+    event.timestamp = millis();
+    return event;
+  }
+
+  bool isAvailable() override {
+    return Serial2.available(); // Check if sensor responding
+  }
+
+  String getStatusString() override {
+    if (presenceDetected) {
+      return "DETECTED " + String(distance) + "cm (" + String(confidence) + "%)";
+    }
+    return "Clear";
+  }
+};
+```
+
+Benefits of Abstraction:
+  - Easy to add new sensor types
+  - Swap sensors without changing main code
+  - Mock sensors for testing without hardware
+  - Uniform error handling
+
+7.3 LORA COMMUNICATION LAYER
+-----------------------------
+
+Encapsulate all LoRa logic in a single class:
+
+```cpp
+// File: lora/LoRaComm.h
+
+#include <RH_RF95.h>
+#include <RHReliableDatagram.h>
+
+class LoRaComm {
+private:
+  RH_RF95 rf95;
+  RHReliableDatagram manager;
+  uint8_t nodeID;
+  uint8_t hubID;
+  uint8_t sequenceNumber;
+
+public:
+  LoRaComm(uint8_t nID, uint8_t hID) :
+    rf95(LORA_CS_PIN, LORA_INT_PIN),
+    manager(rf95, nID),
+    nodeID(nID),
+    hubID(hID),
+    sequenceNumber(0) {}
+
+  bool begin() {
+    if (!manager.init()) return false;
+    rf95.setFrequency(915.0);
+    rf95.setTxPower(17);
+    rf95.setSpreadingFactor(8);
+    rf95.setSignalBandwidth(125000);
+    rf95.setCodingRate4(5);
+    return true;
+  }
+
+  void sendEnvironmentalPacket(EnvData data) {
+    uint8_t packet[12];
+    packet[0] = nodeID;
+    packet[1] = 0x01; // Environmental packet type
+    packInt16(packet, 2, data.temperature * 100);
+    packUint16(packet, 4, data.humidity * 100);
+    packUint16(packet, 6, data.pressure * 10);
+    packUint16(packet, 8, data.batteryVoltage);
+    packet[10] = rf95.lastRssi();
+    packet[11] = calculateChecksum(packet, 11);
+
+    manager.sendtoWait(packet, sizeof(packet), hubID);
+    sequenceNumber++;
+  }
+
+  void sendDetectionEvent(DetectionEvent event) {
+    uint8_t packet[8];
+    packet[0] = nodeID;
+    packet[1] = 0x02; // Detection event type
+    packet[2] = event.type;
+    packet[3] = event.confidence;
+    packUint16(packet, 4, event.distance);
+    packet[6] = event.zone;
+    packet[7] = calculateChecksum(packet, 7);
+
+    manager.sendtoWait(packet, sizeof(packet), hubID);
+  }
+
+  void processIncoming() {
+    if (manager.available()) {
+      uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+      uint8_t len = sizeof(buf);
+      uint8_t from;
+
+      if (manager.recvfromAck(buf, &len, &from)) {
+        handleIncomingPacket(buf, len, from);
+      }
+    }
+  }
+
+  void handleIncomingPacket(uint8_t* buf, uint8_t len, uint8_t from) {
+    if (from != hubID) return; // Only accept from hub
+
+    uint8_t packetType = buf[1];
+
+    switch (packetType) {
+      case 0x03: // Alarm command
+        handleAlarmCommand(buf, len);
+        break;
+      case 0x20: // Configuration update
+        handleConfigUpdate(buf, len);
+        break;
+      case 0x21: // Time sync
+        handleTimeSync(buf, len);
+        break;
+    }
+  }
+
+private:
+  void packInt16(uint8_t* buf, int offset, int16_t value) {
+    buf[offset] = value >> 8;
+    buf[offset + 1] = value & 0xFF;
+  }
+
+  void packUint16(uint8_t* buf, int offset, uint16_t value) {
+    buf[offset] = value >> 8;
+    buf[offset + 1] = value & 0xFF;
+  }
+
+  uint8_t calculateChecksum(uint8_t* buf, int len) {
+    uint8_t checksum = 0;
+    for (int i = 0; i < len; i++) {
+      checksum ^= buf[i];
+    }
+    return checksum;
+  }
+};
+```
+
+7.4 CONFIGURATION SYSTEM
+------------------------
+
+Store settings in ESP32 Preferences (NVS flash):
+
+```cpp
+// File: config/NodeConfig.h
+
+#include <Preferences.h>
+
+class NodeConfig {
+private:
+  Preferences prefs;
+
+public:
+  uint8_t nodeID;
+  uint8_t hubID;
+  String nodeName;
+  AlarmMode alarmMode;
+  uint8_t detectionSensitivity;
+  bool quietHoursEnabled;
+  uint8_t quietHourStart;
+  uint8_t quietHourEnd;
+
+  void load() {
+    prefs.begin("boat-monitor", false);
+
+    nodeID = prefs.getUChar("nodeID", 0x01); // Default 0x01
+    hubID = prefs.getUChar("hubID", 0x00);
+    nodeName = prefs.getString("nodeName", "Unknown Node");
+    alarmMode = (AlarmMode)prefs.getUChar("alarmMode", MODE_DISARMED);
+    detectionSensitivity = prefs.getUChar("sensitivity", 50);
+    quietHoursEnabled = prefs.getBool("quietHours", false);
+    quietHourStart = prefs.getUChar("quietStart", 22);
+    quietHourEnd = prefs.getUChar("quietEnd", 6);
+
+    prefs.end();
+  }
+
+  void save() {
+    prefs.begin("boat-monitor", false);
+
+    prefs.putUChar("nodeID", nodeID);
+    prefs.putUChar("hubID", hubID);
+    prefs.putString("nodeName", nodeName);
+    prefs.putUChar("alarmMode", alarmMode);
+    prefs.putUChar("sensitivity", detectionSensitivity);
+    prefs.putBool("quietHours", quietHoursEnabled);
+    prefs.putUChar("quietStart", quietHourStart);
+    prefs.putUChar("quietEnd", quietHourEnd);
+
+    prefs.end();
+  }
+
+  void factoryReset() {
+    prefs.begin("boat-monitor", false);
+    prefs.clear();
+    prefs.end();
+    load(); // Reload defaults
+  }
+
+  AlarmMode getAlarmMode() {
+    // Check if quiet hours are active
+    if (quietHoursEnabled && isQuietHours()) {
+      return MODE_QUIET;
+    }
+    return alarmMode;
+  }
+
+  bool isQuietHours() {
+    // Get current hour (requires RTC or time sync)
+    uint8_t hour = getCurrentHour();
+
+    if (quietHourStart < quietHourEnd) {
+      // Normal range: e.g., 8am to 6pm
+      return hour >= quietHourStart && hour < quietHourEnd;
+    } else {
+      // Overnight range: e.g., 10pm to 6am
+      return hour >= quietHourStart || hour < quietHourEnd;
+    }
+  }
+};
+```
+
+7.5 HUB FIRMWARE ARCHITECTURE
+------------------------------
+
+More complex than nodes due to coordination duties:
+
+```cpp
+// File: hub_firmware.ino
+
+#include "lora/LoRaHub.h"
+#include "display/HubDisplay.h"
+#include "storage/DataLogger.h"
+#include "alarm/AlarmManager.h"
+#include "web/WebServer.h"
+
+LoRaHub lora;
+HubDisplay display;
+DataLogger logger;
+AlarmManager alarmMgr;
+WebServer webServer;
+
+// Node registry
+struct NodeInfo {
+  uint8_t id;
+  String name;
+  unsigned long lastContact;
+  float temperature;
+  float humidity;
+  float pressure;
+  uint16_t batteryVoltage;
+  int rssi;
+  bool online;
+};
+
+NodeInfo nodes[MAX_NODES];
+int nodeCount = 0;
+
+void setup() {
+  Serial.begin(115200);
+
+  lora.begin();
+  display.begin();
+  logger.begin();
+  alarmMgr.begin();
+  webServer.begin();
+
+  // Register nodes (from config or auto-discover)
+  registerNode(0x01, "Companionway");
+  registerNode(0x02, "Foredeck");
+  registerNode(0x03, "Cockpit");
+  registerNode(0x04, "Cabin");
+
+  display.showWelcome();
+}
+
+void loop() {
+  // Process incoming LoRa messages
+  LoRaMessage msg;
+  if (lora.receive(&msg)) {
+    handleNodeMessage(msg);
+  }
+
+  // Update display
+  display.update(nodes, nodeCount, alarmMgr.getState());
+
+  // Check for offline nodes
+  checkNodeHealth();
+
+  // Handle web interface requests
+  webServer.handleClient();
+
+  // Process alarm state machine
+  alarmMgr.process();
+
+  // Periodic time sync broadcast
+  static unsigned long lastTimeSync = 0;
+  if (millis() - lastTimeSync > 600000) { // 10 minutes
+    lora.broadcastTimeSync();
+    lastTimeSync = millis();
+  }
+}
+
+void handleNodeMessage(LoRaMessage msg) {
+  // Find node in registry
+  NodeInfo* node = findNode(msg.fromID);
+  if (!node) {
+    Serial.println("Unknown node: " + String(msg.fromID));
+    return;
+  }
+
+  // Update last contact
+  node->lastContact = millis();
+  node->online = true;
+  node->rssi = msg.rssi;
+
+  // Parse packet type
+  switch (msg.packetType) {
+    case 0x01: // Environmental data
+      handleEnvironmentalData(node, msg.payload);
+      logger.logEnvironmental(node->id, node->temperature, node->humidity, node->pressure);
+      break;
+
+    case 0x02: // Detection event
+      handleDetectionEvent(node, msg.payload);
+      logger.logDetection(node->id, msg.payload);
+      break;
+
+    case 0x03: // Alarm trigger
+      alarmMgr.triggerAlarm(node->id);
+      logger.logAlarm(node->id);
+      break;
+  }
+}
+
+void handleEnvironmentalData(NodeInfo* node, uint8_t* payload) {
+  // Unpack binary data (see section 3.2)
+  int16_t temp = (payload[0] << 8) | payload[1];
+  uint16_t hum = (payload[2] << 8) | payload[3];
+  uint16_t pres = (payload[4] << 8) | payload[5];
+  uint16_t bat = (payload[6] << 8) | payload[7];
+
+  node->temperature = temp / 100.0;
+  node->humidity = hum / 100.0;
+  node->pressure = pres / 10.0;
+  node->batteryVoltage = bat;
+
+  // Check for alerts
+  if (node->batteryVoltage < 3300) {
+    display.showAlert("Low battery: " + node->name);
+  }
+}
+
+void checkNodeHealth() {
+  unsigned long now = millis();
+
+  for (int i = 0; i < nodeCount; i++) {
+    if (now - nodes[i].lastContact > 600000) { // 10 minutes
+      if (nodes[i].online) {
+        nodes[i].online = false;
+        display.showAlert("Node offline: " + nodes[i].name);
+        logger.logEvent("NODE_OFFLINE", nodes[i].id);
+      }
+    }
+  }
+}
+```
+
+7.6 OVER-THE-AIR (OTA) UPDATES
+-------------------------------
+
+Enable firmware updates without physical access:
+
+```cpp
+#include <ArduinoOTA.h>
+
+void setupOTA() {
+  ArduinoOTA.setHostname("liberty-hub");
+  ArduinoOTA.setPassword("secure_password_here");
+
+  ArduinoOTA.onStart([]() {
+    display.showOTAProgress(0);
+  });
+
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    int percent = (progress / (total / 100));
+    display.showOTAProgress(percent);
+  });
+
+  ArduinoOTA.onEnd([]() {
+    display.showMessage("Update complete! Rebooting...");
+  });
+
+  ArduinoOTA.begin();
+}
+
+void loop() {
+  ArduinoOTA.handle();
+  // ... rest of loop ...
+}
+```
+
+For nodes, OTA updates can be pushed via LoRa:
+  - Hub downloads new firmware (via WiFi)
+  - Fragments firmware into small packets
+  - Sends to node over LoRa
+  - Node assembles and flashes new firmware
+  - More complex, implement in Phase 2+
+
+================================================================================
+8. HARDWARE, POWER, AND MARINE CONSIDERATIONS
+================================================================================
+
+8.1 POWER SYSTEM DESIGN
+------------------------
+
+NODES: Battery + Solar (for remote nodes) OR 12V DC (for accessible nodes)
+
+OPTION A: Battery-Powered Nodes (Companionway, Foredeck)
+  - Battery: 18650 Li-ion (3.7V, 3000mAh) x2 in parallel = 6000mAh
+  - Voltage: 3.7V nominal (3.0-4.2V range)
+  - Charging: TP4056 module (micro-USB or solar)
+  - Optional: Small solar panel (5V, 1W) for trickle charging
+  - Runtime: 6000mAh / 242mAh per day (see 4.2) = ~25 days without charging
+  - With solar (sunny climate): Indefinite
+
+OPTION B: 12V DC Powered Nodes (Cockpit, Cabin, Engine)
+  - Input: 12V boat battery (9-16V range)
+  - Regulation:
+    * LM2596 buck converter (12V → 5V, 3A, efficient)
+    * AMS1117-3.3 LDO (5V → 3.3V, 1A)
+  - Protection:
+    * Fuse (1A fast-blow)
+    * TVS diode (protection from voltage spikes)
+    * Reverse polarity protection (diode or MOSFET)
+  - Backup battery (optional):
+    * LiPo battery charged by 5V rail
+    * Switches to battery if 12V fails
+    * Allows logging of power failure events
+
+WIRING:
+  - Use marine-grade tinned copper wire (prevents corrosion)
+  - 18 AWG for power, 22 AWG for signals
+  - Crimp connections with heat-shrink tubing (NOT solder for vibration resistance)
+  - Label all wires clearly
+  - Route away from VHF, AIS, radar (RF interference)
+
+POWER BUDGETING (Example Cockpit Node):
+  Component              Current     Duty    Avg Current
+  -----------------------------------------------------------
+  ESP32 (WiFi off)       80mA        100%    80mA
+  LoRa (RX)              12mA        100%    12mA
+  LoRa (TX)              120mA       0.1%    0.12mA
+  Display (backlight)    100mA       50%     50mA (dimmed at night)
+  BME280                 3.6mA       2%      0.07mA (1Hz sampling)
+  mmWave sensor          50mA        100%    50mA
+  Buzzer                 30mA        1%      0.3mA
+  -----------------------------------------------------------
+  TOTAL                                      192mA @ 3.3V = 634mW
+
+At 12V input: 634mW / 12V / 0.85 (efficiency) = 62mA draw from boat battery
+Daily consumption: 62mA * 24h = 1.5Ah per day
+Boat battery impact (200Ah bank): 0.75% per day (negligible)
+
+HUB: 12V DC (Mains Power) with Battery Backup
+  - Primary: 12V boat power (always on)
+  - Backup: 12V 7Ah SLA battery (for ~24hr runtime if power fails)
+  - Automatic switchover via LM2596 + Schottky diode OR-ing
+
+8.2 ENVIRONMENTAL HARDENING
+----------------------------
+
+MARINE CHALLENGES:
+  1. Salt air (corrosive)
+  2. Humidity (condensation, mold)
+  3. Spray/splash (water ingress)
+  4. Vibration (boat motion, engine)
+  5. Temperature extremes (-10°C to +60°C in sun)
+  6. UV exposure (plastic degradation)
+
+ENCLOSURE SELECTION:
+
+Interior Nodes (Cabin, Cockpit locker):
+  - IP54 rated minimum (dust protected, splash resistant)
+  - ABS plastic (UV stable, durable)
+  - Gasket seal on lid
+  - Cable glands for wiring (PG7 or PG9 size)
+  - Ventilation: Vent plugs (Gore-Tex membrane, breathable but waterproof)
+  - Example: Hammond 1554 series, Bud Industries NBF series
+
+Exterior Nodes (Companionway, Foredeck):
+  - IP65 or IP67 rated (waterproof to jets or temporary submersion)
+  - Polycarbonate (tougher than ABS, UV stable)
+  - Double gasket seal
+  - Cable glands with strain relief
+  - NO vents (use conformal coating on PCB instead)
+  - Example: Polycase WC series, Fibox TEMPO series
+
+Display Protection:
+  - Acrylic or polycarbonate window (not glass - shatters)
+  - Anti-glare coating for sunlight readability
+  - Recessed to protect from impact
+  - Gasket around display perimeter
+
+CONFORMAL COATING:
+  - Apply to all PCBs after assembly
+  - Acrylic or silicone-based (Dow Corning 1-2577, MG Chemicals 422B)
+  - Protects against moisture, salt, corrosion
+  - Brush or spray on, ~0.1mm thick
+  - Avoid coating: connectors, test points, adjustment holes
+
+CONNECTOR SELECTION:
+  - Use sealed connectors for external sensors
+  - Deutsch DT series (automotive, waterproof)
+  - JST-XH or Molex KK for internal connections
+  - Strain relief on all cables
+
+ANTI-VIBRATION:
+  - Mount enclosure with rubber grommets or silicone pads
+  - Secure PCB with standoffs + lock washers
+  - Hot glue critical components (connectors, sensors) to PCB
+  - Lock wire nuts with thread locker
+
+THERMAL MANAGEMENT:
+  - ESP32 and LoRa don't generate much heat (<1W each)
+  - However, direct sun exposure can heat enclosure to 60°C+
+  - Solutions:
+    * Mount in shade when possible
+    * Use white/light colored enclosures (reflects heat)
+    * Add thermal mass (aluminum plate inside for heat sink)
+    * Use temperature sensor to throttle display backlight if >50°C
+
+8.3 SENSOR PLACEMENT OPTIMIZATION
+----------------------------------
+
+COMPANIONWAY NODE:
+  - Position: Inside companionway, upper bulkhead, facing outward
+  - mmWave sensor: Angled 15° downward to cover boarding steps
+  - Height: ~1.5m above sole (head-height of approaching person)
+  - Avoid: Pointing directly at neighboring boats or dock traffic
+
+FOREDECK NODE:
+  - Position: Under foredeck, near forward hatch
+  - mmWave sensor: Angled 30° upward to see over bow rail
+  - Range: Limit to 3m to avoid false triggers from dock
+  - Weather sensors: Exposed to air via deck vent or dorade
+
+COCKPIT NODE:
+  - Position: Inside cockpit locker, with display visible from helm
+  - mmWave sensor: Through small hole in locker, aimed aft
+  - Display: Mounted on bulkhead, easy to read from seated position
+  - Weatherproof: Required if in exposed cockpit (not inside locker)
+
+CABIN NODE:
+  - Position: Overhead, centered in cabin
+  - mmWave sensor: Aimed toward companionway (detect intrusion)
+  - CO2 sensor: At breathing height (~1.5m) for accurate reading
+  - Avoid: Near galley stove (heat and moisture skew readings)
+
+ENGINE COMPARTMENT NODE:
+  - Position: On engine box wall, away from exhaust
+  - Temperature sensor: Near engine block but not touching (radiant heat)
+  - Bilge sensor: Lowest point of bilge
+  - Gas sensor: Low in bilge (propane is heavier than air)
+  - Ventilation: Must survive high heat (up to 60°C)
+
+8.4 ANTENNA PLACEMENT
+---------------------
+
+GENERAL RULES:
+  1. Vertical orientation for omnidirectional pattern
+  2. Away from metal (mast, rigging, fuel tanks)
+  3. Clear line-of-sight to hub
+  4. Avoid bending wire antenna (tunes incorrectly)
+
+SPECIFIC RECOMMENDATIONS:
+  - Companionway: Antenna vertical inside companionway (good 360° coverage)
+  - Foredeck: Antenna through deck gland, vertical on foredeck (exposed but optimal)
+  - Cockpit: Antenna up through cockpit drain or inside but near fiberglass (compromised but acceptable)
+  - Cabin: Antenna vertical overhead (obstructed by deck above, but close to hub)
+  - Hub: Central location, antenna vertical, highest point possible for best coverage
+
+TESTING:
+  - Use RSSI values to optimize placement
+  - Temporarily mount with tape, test, then permanent install
+  - Expect -60 to -80 dBm on boat network (very good)
+
+8.5 INSTALLATION BEST PRACTICES
+--------------------------------
+
+STEP 1: PLAN LAYOUT
+  - Sketch boat layout with node positions
+  - Identify power sources (12V taps)
+  - Plan cable routes (avoid: bilge water, sharp edges, high-traffic areas)
+  - Mark mounting hole positions
+
+STEP 2: PREPARE ENCLOSURES
+  - Drill holes for cable glands (use step drill bit)
+  - Deburr all holes (prevents cable chafing)
+  - Install cable glands dry-fit first
+  - Apply silicone sealant to cable gland threads
+  - Mount PCB standoffs inside enclosure
+
+STEP 3: WIRE POWER
+  - Run wires through cable glands BEFORE soldering
+  - Use in-line fuse holder (near power source)
+  - Crimp ferrules or ring terminals on wire ends
+  - Test voltage at node location (should be 11.5-14.5V)
+  - Connect and verify power (use multimeter)
+
+STEP 4: ASSEMBLE NODE
+  - Install sensors (I2C, UART, etc.)
+  - Connect LoRa module
+  - Connect display
+  - Apply conformal coating (if not done earlier)
+  - Program and test on bench (before mounting)
+
+STEP 5: MOUNT NODE
+  - Use stainless steel screws (not zinc-plated, corrodes)
+  - Drill pilot holes (undersized for self-tapping screws)
+  - Add silicone sealant under screw heads (waterproofing)
+  - Tighten evenly (don't overtighten plastic enclosures)
+  - Test operation immediately after mounting
+
+STEP 6: COMMISSION SYSTEM
+  - Power on all nodes
+  - Verify LoRa communication (check RSSI)
+  - Test human detection (walk around boat)
+  - Calibrate sensors if needed
+  - Configure settings (node names, sensitivity, etc.)
+  - Run system test for 24 hours
+
+STEP 7: LABEL AND DOCUMENT
+  - Label all nodes (name, ID, purpose)
+  - Label power wires at breaker panel
+  - Create wiring diagram (keep laminated copy on boat)
+  - Document node locations (for future maintenance)
+
+8.6 MAINTENANCE SCHEDULE
+-------------------------
+
+WEEKLY (underway or liveaboard):
+  - Check node displays for warnings
+  - Verify all nodes online (on hub)
+  - Test alarm trigger (manual test mode)
+
+MONTHLY:
+  - Inspect enclosures for cracks or water ingress
+  - Clean display screens
+  - Check battery voltages (battery-powered nodes)
+  - Verify sensor readings (compare to known-good source)
+
+QUARTERLY:
+  - Tighten mounting screws (vibration loosens over time)
+  - Check antenna connections
+  - Inspect cable glands for cracks
+  - Download and archive logs
+
+ANNUALLY:
+  - Replace batteries (battery-powered nodes)
+  - Re-apply conformal coating if needed (after repairs)
+  - Check for firmware updates
+  - Full system calibration
+
+================================================================================
+9. CONCRETE NEXT STEPS (IMPLEMENTATION PLAN)
+================================================================================
+
+9.1 PHASE 1: PROOF OF CONCEPT (Week 1-2)
+-----------------------------------------
+
+OBJECTIVE: Build and test ONE node + hub to validate core functionality
+
+TASKS:
+
+1. ORDER COMPONENTS (Day 1):
+   Hardware for 1 node + hub:
+   - 2x ESP32-S3-DevKitC-1 ($10 each)
+   - 2x RFM95W LoRa module ($6 each)
+   - 1x BME280 breakout ($8)
+   - 1x HLK-LD2410 mmWave sensor ($12)
+   - 1x 2.4" TFT display ILI9341 ($15)
+   - 1x 3.5" TFT touchscreen ILI9488 ($25)
+   - 1x DS3231 RTC module ($3)
+   - 1x LM2596 buck converter ($3)
+   - 2x Enclosures: Hammond 1554 series ($15 each)
+   - Breadboard, jumper wires, connectors
+   - Total: ~$150
+
+   Recommended Suppliers:
+   - AliExpress (cheapest, 2-4 week shipping)
+   - Amazon (faster, more expensive)
+   - Adafruit/SparkFun (quality, expensive, great support)
+
+2. BUILD NODE PROTOTYPE (Day 3-5):
+   - Assemble on breadboard first (no soldering yet)
+   - Connect ESP32 + LoRa + BME280 + mmWave sensor
+   - Connect small OLED display (0.96", easier than TFT for testing)
+   - Power from USB (5V)
+
+3. DEVELOP NODE FIRMWARE (Day 5-10):
+   - Install Arduino IDE + ESP32 board support
+   - Install libraries: RadioHead, Adafruit_BME280, Adafruit_GFX
+   - Write basic sensor read loop
+   - Implement LoRa transmission (environmental data packet)
+   - Display sensor data on OLED
+   - Test and debug
+
+4. BUILD HUB PROTOTYPE (Day 8-10):
+   - Assemble ESP32 + LoRa + larger display
+   - Power from 12V adapter (simulate boat power)
+
+5. DEVELOP HUB FIRMWARE (Day 10-14):
+   - LoRa receive and decode packets
+   - Display node data on screen
+   - Log to SD card (if equipped)
+   - Simple touchscreen UI (if using touchscreen)
+
+6. FIELD TEST (Day 14):
+   - Set up node + hub in different rooms of house (simulates boat zones)
+   - Verify LoRa communication (check RSSI, packet loss)
+   - Test range through walls (simulates fiberglass hull)
+   - Test mmWave detection (walk near sensor, measure false positives)
+   - Log data for analysis
+
+DELIVERABLES:
+  ✓ Working node that reads sensors and transmits via LoRa
+  ✓ Working hub that receives and displays data
+  ✓ Validated LoRa range and reliability
+  ✓ Validated mmWave human detection
+
+GO/NO-GO DECISION: If LoRa range is insufficient or mmWave has too many false positives, revise design before proceeding.
+
+9.2 PHASE 2: REFINE AND EXPAND (Week 3-4)
+------------------------------------------
+
+OBJECTIVE: Add alarm logic, improve UI, build 2nd node
+
+TASKS:
+
+1. IMPLEMENT ALARM LOGIC (Day 15-17):
+   - Add state machine (disarmed/doorbell/armed modes)
+   - Implement detection filtering (confidence, duration, distance)
+   - Add buzzer/alarm sound
+   - Test false-positive mitigation
+
+2. IMPROVE USER INTERFACE (Day 17-19):
+   - Design better display layouts (see section 3.3)
+   - Add button controls for mode switching
+   - Implement settings menu on hub
+   - Add visual indicators (status icons, trend arrows)
+
+3. BUILD 2ND NODE (Day 20-21):
+   - Duplicate node hardware
+   - Flash same firmware (configure different node ID)
+   - Test multi-node communication with hub
+
+4. IMPLEMENT DATA LOGGING (Day 21-22):
+   - Add SD card to hub
+   - Log sensor data to CSV (timestamp, node, temp, humidity, pressure)
+   - Log events (alarms, detections, mode changes)
+   - Test log retrieval and analysis
+
+5. FIELD TEST ON BOAT (Day 23-25):
+   - Temporarily install nodes on Bristol 32 (tape/clamps, no permanent mounting)
+   - Test in real marine environment
+   - Monitor for false positives (rigging, waves, dock activity)
+   - Adjust sensitivity and filtering
+   - Measure LoRa range and reliability on boat
+
+DELIVERABLES:
+  ✓ Functional alarm system with multiple modes
+  ✓ Improved UI with settings and controls
+  ✓ Two nodes communicating reliably with hub
+  ✓ Data logging system
+  ✓ Field-tested on boat with adjustments
+
+9.3 PHASE 3: PRODUCTION HARDWARE (Week 5-6)
+--------------------------------------------
+
+OBJECTIVE: Build permanent, marine-hardened nodes for installation
+
+TASKS:
+
+1. DESIGN CUSTOM PCB (Day 26-28) [OPTIONAL]:
+   - Use EasyEDA or KiCad to design PCB layout
+   - Integrate ESP32, LoRa, sensors, power regulation on single board
+   - Order PCBs from JLCPCB or PCBWay (5-10 day turnaround)
+   - OR: Continue with breadboard/perfboard (cheaper, faster for small quantity)
+
+2. SOLDER PRODUCTION NODES (Day 29-31):
+   - Solder components on perfboard or PCB
+   - Apply conformal coating
+   - Install in weatherproof enclosures
+   - Add cable glands and wire strain relief
+
+3. TEST AND CALIBRATE (Day 32-33):
+   - Functional test all nodes
+   - Calibrate sensors (compare to known-good reference)
+   - Burn test (run for 24+ hours to find early failures)
+
+4. PREPARE INSTALLATION (Day 34-35):
+   - Plan final mounting locations on boat
+   - Prepare mounting hardware (screws, brackets, sealant)
+   - Run power wiring (12V taps from distribution panel)
+   - Label all wires
+
+5. INSTALL PERMANENTLY (Day 36-38):
+   - Mount hub at nav station
+   - Mount companionway node
+   - Mount cockpit node
+   - Mount cabin node
+   - Connect power and test
+   - Seal all penetrations with marine sealant
+
+DELIVERABLES:
+  ✓ Hardened, marine-ready nodes in weatherproof enclosures
+  ✓ Permanently installed system on Bristol 32
+  ✓ Documented wiring and configuration
+
+9.4 PHASE 4: ADDITIONAL FEATURES (Week 7-8+)
+---------------------------------------------
+
+OBJECTIVE: Add advanced sensors and integrations
+
+TASKS (in priority order):
+
+1. Add Bilge Water Sensor (Day 39-40):
+   - Install float switch in bilge (engine compartment node)
+   - Test alarm trigger on water detection
+
+2. Add Battery Monitor (Day 41-42):
+   - Install INA226 on house battery bank
+   - Display voltage/current on hub
+   - Alert on low battery
+
+3. Add GPS Anchor Watch (Day 43-45):
+   - Add GPS module to hub
+   - Implement anchor drift detection
+   - Test in real anchorage
+
+4. WiFi Web Interface (Day 46-48):
+   - Develop web interface for hub
+   - Test remote access from phone/tablet
+   - Add OTA update capability
+
+5. Additional Environmental Nodes (Day 49+):
+   - Build engine compartment node (high temp, gas sensor)
+   - Build forward cabin node (humidity/CO2)
+   - Expand system as needed
+
+FUTURE ENHANCEMENTS:
+  - NMEA integration with chart plotter
+  - MQTT/SignalK for advanced automation
+  - Cellular alerts (SIM7600 module)
+  - Integration with VHF radio (automatic DSC alert on alarm)
+  - Solar panel monitoring
+  - Propane tank level sensor
+
+9.5 DEVELOPMENT MILESTONES
+---------------------------
+
+✓ MILESTONE 1 (End of Week 2): Proof of concept working
+  - 1 node + hub communicating via LoRa
+  - Basic sensor readings displayed
+
+✓ MILESTONE 2 (End of Week 4): Functional prototype system
+  - Multi-node network operational
+  - Alarm logic working
+  - Field-tested on boat
+
+✓ MILESTONE 3 (End of Week 6): Production deployment
+  - Permanent installation complete
+  - Marine-hardened hardware
+  - System running 24/7
+
+✓ MILESTONE 4 (Week 8+): Enhanced features
+  - Additional sensors integrated
+  - Web interface operational
+  - Advanced automation features
+
+9.6 BUDGET ESTIMATE
+--------------------
+
+MINIMAL SYSTEM (3 nodes + hub):
+  Component                     Qty   Unit Cost   Total
+  -------------------------------------------------------
+  ESP32-S3                      4     $10         $40
+  RFM95W LoRa module            4     $6          $24
+  BME280 sensors                4     $8          $32
+  HLK-LD2410 mmWave             3     $12         $36
+  2.4" TFT displays (nodes)     3     $15         $45
+  3.5" TFT touchscreen (hub)    1     $25         $25
+  Enclosures                    4     $15         $60
+  Power supplies/converters     4     $5          $20
+  Wiring, connectors            -     -           $30
+  SD card, RTC, misc            -     -           $20
+  -------------------------------------------------------
+  TOTAL                                           $332
+
+FULL SYSTEM (5 nodes + hub + extras):
+  Add:
+  - 2 more nodes                                  $100
+  - Bilge sensor                                  $5
+  - Battery monitor (INA226)                      $8
+  - GPS module                                    $15
+  - Gas sensor (MQ-6)                             $5
+  - Additional enclosures/wiring                  $50
+  -------------------------------------------------------
+  TOTAL                                           $515
+
+COMPARISON TO COMMERCIAL SYSTEMS:
+  - Basic boat alarm: $200-400 (limited features)
+  - Professional LoRa sensor network: $1000-2000+
+  - This DIY system: $330-515 (highly customizable, expandable)
+
+9.7 RISK MITIGATION
+--------------------
+
+TECHNICAL RISKS:
+
+1. LORA RANGE INSUFFICIENT:
+   - Mitigation: Test early (Phase 1), use higher SF or add relay node
+   - Fallback: Switch to WiFi mesh (ESP-NOW) if boat-sized network
+
+2. MMWAVE FALSE POSITIVES:
+   - Mitigation: Extensive testing and filtering (Phase 2)
+   - Fallback: Add PIR sensor for fusion, or use camera-based detection
+
+3. POWER CONSUMPTION TOO HIGH (battery nodes):
+   - Mitigation: Deep sleep optimization, larger battery
+   - Fallback: Add solar panel or switch to wired power
+
+4. SALT CORROSION:
+   - Mitigation: Conformal coating, quality enclosures
+   - Fallback: Replace corroded components, improve sealing
+
+OPERATIONAL RISKS:
+
+5. SYSTEM COMPLEXITY (too hard to use):
+   - Mitigation: Simple UI design, clear documentation
+   - Fallback: Simplify to basic modes only
+
+6. RELIABILITY (nodes going offline):
+   - Mitigation: Watchdog timers, auto-reset, offline alerts
+   - Fallback: Manual node reset, backup redundancy
+
+9.8 SUCCESS CRITERIA
+---------------------
+
+The system will be considered successful if:
+
+✓ All nodes communicate reliably with hub (>99% packet delivery)
+✓ Human detection works with <5% false positive rate
+✓ Environmental data accurate within ±2°C, ±5% RH, ±2 hPa
+✓ System runs continuously for 30 days without intervention
+✓ Alarm triggers correctly in test scenarios
+✓ User can arm/disarm and configure without consulting manual
+✓ Power consumption within budget (battery nodes >14 days runtime)
+✓ Hardware survives marine environment (no corrosion, water ingress)
+
+================================================================================
+END OF DESIGN DOCUMENT
+================================================================================
+
+This comprehensive design provides a complete blueprint for implementing a
+distributed human detection and environmental monitoring system on the
+Bristol 32 sailboat "Liberty".
+
+The modular, expandable architecture allows starting with a basic system
+(companionway doorbell + weather monitoring) and progressively adding
+advanced features (anchor watch, bilge monitoring, full boat automation).
+
+The LoRa-based communication provides reliable, long-range connectivity
+across the boat while maintaining low power consumption for battery operation.
+
+Ready to build? Start with Phase 1 (proof of concept) and iterate from there.
+
+Fair winds and following seas!
+
+================================================================================

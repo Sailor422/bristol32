@@ -1,0 +1,78 @@
+Category,Part,Description,Quantity Node,Quantity Hub,Unit Price,Total (3 nodes + hub),Supplier,Part Number,Notes
+Microcontroller,ESP32-S3-DevKitC-1,Dual-core ESP32-S3 development board,1,1,$12.00,$48.00,Adafruit/AliExpress,4677,ESP32-WROOM-32 also works ($8)
+Radio,RFM95W LoRa Module,915MHz LoRa transceiver module,1,1,$7.00,$28.00,Adafruit/Amazon,3072,Choose freq for region: 915/868/433 MHz
+Environmental,BME280 Breakout,Temp/Humidity/Pressure sensor I2C,1,0,$8.00,$24.00,Adafruit/Amazon,2652,Or BME680 with gas sensing ($10)
+Human Detection,HLK-LD2410,24GHz mmWave presence detector,1,0,$12.00,$36.00,Amazon/AliExpress,B0B7R3K9YV,Alternative: DFRobot SEN0395 ($15)
+Display - Node,ILI9341 2.4" TFT,320x240 SPI display,1,0,$15.00,$45.00,Adafruit/Amazon,2478,Some nodes can omit display ($0)
+Display - Hub,ILI9488 3.5" TFT,480x320 touchscreen,0,1,$28.00,$28.00,Amazon,B07NVBDK59,Alternative: 4.3" for $35
+Storage,microSD Module,microSD card breakout,0,1,$3.00,$3.00,Adafruit/Amazon,254,SPI interface
+Storage,microSD Card,16GB or 32GB Class 10,0,1,$8.00,$8.00,Amazon,Any,Format as FAT32
+RTC,DS3231 RTC,Precision real-time clock,0,1,$4.00,$4.00,Adafruit/Amazon,3013,Includes CR2032 battery
+Power,LM2596 Buck Converter,12V to 5V 3A step-down,1,1,$3.00,$12.00,Amazon,B07PDGG84B,Adjustable output
+Power,AMS1117-3.3 LDO,5V to 3.3V 1A regulator,1,1,$0.50,$2.00,Mouser/Digi-Key,AMS1117-3.3,SOT-223 or TO-220 package
+Protection,P6KE18A TVS Diode,18V transient suppressor,1,1,$0.30,$1.20,Mouser,P6KE18A,Overvoltage protection
+Protection,1N5819 Schottky,3A 40V Schottky diode,2,3,$0.20,$1.30,Mouser,1N5819,Reverse polarity + OR-ing
+Passive,100nF Ceramic Capacitor,0.1uF decoupling caps,10,15,$0.05,$1.25,Mouser,Any,50V rating
+Passive,10uF Electrolytic,10uF 16V capacitor,5,5,$0.10,$1.00,Mouser,Any,Low ESR preferred
+Passive,100uF Electrolytic,100uF 16V capacitor,2,2,$0.20,$0.80,Mouser,Any,Power rail filtering
+Passive,4.7kΩ Resistor,1/4W resistor,5,5,$0.02,$0.20,Mouser,Any,I2C pull-ups (if needed)
+Passive,1kΩ Resistor,1/4W resistor,3,3,$0.02,$0.12,Mouser,Any,Transistor base resistor
+Passive,100Ω Resistor,1/4W resistor,2,2,$0.02,$0.08,Mouser,Any,LED current limiting
+Transistor,2N2222 NPN,NPN transistor TO-92,1,1,$0.10,$0.40,Mouser,2N2222A,Buzzer driver
+Audio,Piezo Buzzer,5V active buzzer or piezo,1,0,$1.50,$4.50,Amazon,Any,Node alarm
+Audio,Speaker 8Ω 0.5W,Small speaker,0,1,$2.00,$2.00,Amazon,Any,Hub alarm (optional amplifier)
+Controls,Tactile Button,6x6mm push button,3,3,$0.15,$0.90,Amazon,Any,SPST momentary
+Enclosure,IP65 Plastic Box,Weatherproof enclosure node,1,0,$15.00,$45.00,Amazon/Hammond,1554 series,~120x80x60mm
+Enclosure,IP54 Plastic Box,Enclosure for hub,0,1,$25.00,$25.00,Amazon,Any,~200x120x80mm
+Hardware,PG7 Cable Gland,Waterproof cable entry,2,3,$1.50,$7.50,Amazon,Any,M12 threads
+Hardware,Stainless Screws,M3 or #6 screws + washers,10,10,$0.10,$0.40,Hardware store,Any,Marine grade SS316
+Hardware,Nylon Standoffs,M3 PCB standoffs,4,4,$0.20,$0.80,Amazon,Any,15mm height
+Antenna,Wire Antenna,8.2cm wire for 915MHz,1,1,$0.00,$0.00,DIY,N/A,Or use SMA whip ($3 ea)
+Antenna,SMA Connector,SMA female PCB mount,1,1,$1.00,$4.00,Amazon,Optional,If using external antenna
+Wire,Marine Wire 18AWG,Tinned copper wire red,3m,3m,$0.50,$3.00,Amazon/Marine store,Any,Positive power
+Wire,Marine Wire 18AWG,Tinned copper wire black,3m,3m,$0.50,$3.00,Amazon/Marine store,Any,Ground
+Wire,Hookup Wire 22AWG,Stranded wire various,2m,3m,$0.30,$1.50,Amazon,Any,Signal wiring
+Connectors,Crimp Terminals,Ring terminals + heat shrink,10,10,$0.15,$1.50,Amazon,Any,Power connections
+Fuse,Inline Fuse Holder,Blade fuse holder,1,1,$2.00,$8.00,Amazon,Any,12V input protection
+Fuse,1A Blade Fuse,Fast-blow fuse,2,0,$0.50,$1.00,Amazon,Any,Node protection
+Fuse,2A Blade Fuse,Fast-blow fuse,0,2,$0.50,$1.00,Amazon,Any,Hub protection
+Battery,18650 Li-ion,3.7V 3000mAh battery,2,0,$5.00,$30.00,Amazon,Optional,For battery-powered nodes
+Battery,18650 Holder,2-cell battery holder,1,0,$2.00,$6.00,Amazon,Optional,If using batteries
+Battery,TP4056 Module,Li-ion charger module,1,0,$1.50,$4.50,Amazon,Optional,Battery charging
+Battery,12V 7Ah SLA,Sealed lead acid backup,0,1,$25.00,$25.00,Amazon,Optional,Hub backup power
+Solar,5V 1W Solar Panel,Small solar panel,1,0,$8.00,$24.00,Amazon,Optional,Node battery charging
+Misc,Heat Shrink Tubing,Assorted sizes,1 set,1 set,$5.00,$5.00,Amazon,Any,Wire protection
+Misc,Conformal Coating,Acrylic protective coating,1 can,1 can,$12.00,$12.00,Amazon,MG Chemicals 422B,PCB protection
+Misc,Marine Sealant,3M 4200 or 5200,1 tube,1 tube,$12.00,$12.00,Marine store,3M 4200,Mounting/sealing
+Misc,Cable Ties,Assorted zip ties,1 pack,1 pack,$5.00,$5.00,Amazon,Any,Wire management
+Misc,Label Maker Tape,For labeling wires,1,1,$8.00,$8.00,Amazon,Optional,Wire identification
+
+TOTALS,,,,,,,$479.38,,
+
+"COST BREAKDOWN",,,,,,,,
+"3x Nodes (with displays)",,,,,$255.00,,,
+"1x Hub",,,,,$140.00,,,
+"Shared parts/consumables",,,,,$84.38,,,
+"TOTAL SYSTEM",,,,,$479.38,,,
+
+"BUDGET OPTIONS",,,,,,,,
+"Omit displays on 2 nodes",,"Use OLED instead (0.96" $3)",-$30.00,,,
+"Skip battery backup nodes",,"Use wired 12V power only",-$64.50,,,
+"Basic enclosures",,"Use project boxes instead IP65",-$25.00,,,
+"MINIMAL SYSTEM COST",,,,,$359.88,,,
+
+"WHERE TO BUY",,,,,,,,
+"USA","Adafruit","https://adafruit.com","Best quality modules, support",,,
+"","Amazon","https://amazon.com","Fast shipping, mixed quality",,,
+"","AliExpress","https://aliexpress.com","Cheapest, 2-4 week shipping",,,
+"","Mouser/Digi-Key","Component distributors","Best for passives/ICs",,,
+"","Marine stores","West Marine, Defender","Marine-grade wire, sealants",,,
+
+"NOTES",,,,,,,,
+"1. Prices approximate as of 2025, may vary",,,,,,
+"2. Shipping not included",,,,,,
+"3. Minimum order quantities may apply",,,,,,
+"4. Consider buying spare parts (10% extra)",,,,,,
+"5. Some items sold in packs (e.g., resistors)",,,,,,
+"6. Quality varies - read reviews before buying",,,,,,
+"7. ESP32 clones work but may need different drivers",,,,,,

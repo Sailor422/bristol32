@@ -1,0 +1,297 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    BOAT MONITOR NODE - CONNECTION DIAGRAM                  ║
+║                          Bristol 32 "Liberty"                              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           POWER SUPPLY SECTION                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    12V BOAT DC IN
+         │
+         ├──[F1: 1A Fuse]───[D1: P6KE18A TVS]───[D2: 1N5819 Reverse Protection]
+         │
+         ▼
+    ┌─────────────┐
+    │   LM2596    │  Step-down Buck Converter
+    │ 12V → 5V    │  Adjustable, set to 5.0V output
+    │   3A Max    │  Efficiency: ~85%
+    └──────┬──────┘
+           │ 5V
+           ├──[C1: 100µF]─────┐ 5V Rail
+           │                   │
+           ├───────────────────┼──→ Display Backlight (LED pin)
+           │                   │
+           ├───────────────────┼──→ mmWave Sensor VCC (50mA)
+           │                   │
+           │              ┌────┴────┐
+           │              │ AMS1117 │  Linear Regulator
+           │              │ 5V→3.3V │  1A Max
+           │              │  LDO    │  Dropout: 1.2V
+           │              └────┬────┘
+           │                   │ 3.3V
+           │                   ├──[C2: 10µF]─────┐ 3.3V Rail
+           │                   │                  │
+           │                   ├──[C3: 100nF]────┼──→ ESP32 3V3 pin
+           │                   │                  │
+           │                   ├──[C4: 100nF]────┼──→ RFM95W VCC
+           │                   │                  │
+           │                   └──[C5: 100nF]────┴──→ BME280 VCC
+           │
+          GND ════════════════════════════════════════ Common Ground
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ESP32-S3 MAIN CONTROLLER                            │
+│                        (ESP32-S3-DevKitC-1)                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+              ┌────────────────────────────────────┐
+              │                                    │
+              │         ESP32-S3 DevKit            │
+              │                                    │
+    3.3V ────→│ 3V3                           5V  │←──── 5V (USB power)
+    GND  ────→│ GND                          GND  │←──── GND
+              │                                    │
+              │ GPIO7  (SCL) ─────────────────────┼──→ I2C Clock (SCL)
+              │ GPIO8  (SDA) ─────────────────────┼──→ I2C Data (SDA)
+              │                                    │
+              │ GPIO9  (INT) ←────────────────────┼──→ LoRa Interrupt DIO0
+              │ GPIO10 (CS)  ─────────────────────┼──→ LoRa Chip Select
+              │ GPIO11 (MOSI)─────────────────────┼──→ SPI MOSI (LoRa)
+              │ GPIO12 (SCK) ─────────────────────┼──→ SPI Clock (LoRa)
+              │ GPIO13 (MISO)←────────────────────┼──→ SPI MISO (LoRa)
+              │                                    │
+              │ GPIO17 (RX2) ←────────────────────┼──→ mmWave TX
+              │ GPIO18 (TX2) ─────────────────────┼──→ mmWave RX
+              │                                    │
+              │ GPIO21       ─────────────────────┼──→ Display RESET
+              │ GPIO33       ─────────────────────┼──→ Display DC
+              │ GPIO34       ─────────────────────┼──→ Display CS
+              │ GPIO35       ─────────────────────┼──→ Display MOSI
+              │ GPIO36       ─────────────────────┼──→ Display SCK
+              │ GPIO37       ←────────────────────┼──→ Display MISO
+              │                                    │
+              │ GPIO15       ─────────────────────┼──→ Buzzer Driver (via Q1)
+              │                                    │
+              │ GPIO3        ←────────────────────┼──→ Button MODE (to GND)
+              │ GPIO4        ←────────────────────┼──→ Button DISPLAY (to GND)
+              │ GPIO5        ←────────────────────┼──→ Button SILENCE (to GND)
+              │                                    │
+              │ GPIO1  (ADC) ←────────────────────┼──→ Battery Voltage (optional)
+              │                                    │
+              │ USB-C        ←────────────────────┼──→ Programming & Debug
+              │                                    │
+              └────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         RFM95W LoRa MODULE (915MHz)                         │
+│                    **CRITICAL: 3.3V ONLY - NO 5V!**                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+              ┌─────────────────────┐
+              │     RFM95W LoRa     │
+              │   SX1276 Chipset    │
+              │                     │
+    3.3V ────→│ VCC            ANT  │──→ [8.2cm wire antenna for 915MHz]
+    GND  ────→│ GND                 │    OR SMA connector + whip antenna
+              │                     │
+ GPIO10  ────→│ NSS (CS)       DIO0 │───→ GPIO9 (Interrupt)
+ GPIO11  ────→│ MOSI           DIO1 │ (optional)
+ GPIO12  ────→│ SCK            DIO2 │ (optional)
+ GPIO13  ←────│ MISO           RST  │ (can leave floating)
+              │                     │
+              └─────────────────────┘
+
+    Antenna Length Calculation:
+        915 MHz: λ/4 = 8.2 cm
+        868 MHz: λ/4 = 8.6 cm
+        433 MHz: λ/4 = 17.3 cm
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    BME280 ENVIRONMENTAL SENSOR (I2C)                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+              ┌──────────────────┐
+              │     BME280       │  Measures:
+              │  Temp/Hum/Press  │  • Temperature: -40 to +85°C
+              │                  │  • Humidity: 0-100% RH
+    3.3V ────→│ VCC         SDO  │  • Pressure: 300-1100 hPa
+    GND  ────→│ GND              │
+              │                  │  I2C Address: 0x76 or 0x77
+ GPIO8   ←───→│ SDA (I2C Data)   │  (Check with I2C scanner)
+ GPIO7   ────→│ SCL (I2C Clock)  │
+              │                  │
+              └──────────────────┘
+
+    Note: Add 4.7kΩ pull-up resistors to 3.3V on SDA and SCL
+          (or enable internal pull-ups in code)
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│              HLK-LD2410 mmWave HUMAN PRESENCE DETECTOR                      │
+│                         24GHz Radar Module                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+              ┌──────────────────┐
+              │   HLK-LD2410     │  Detection:
+              │   mmWave Radar   │  • Range: 0-6 meters
+              │                  │  • Human presence & motion
+    5V   ────→│ VCC         OUT  │  • Not affected by light/temp
+    GND  ────→│ GND              │
+              │                  │  UART Config: 115200 baud
+ GPIO18  ────→│ RX (Config)      │
+ GPIO17  ←────│ TX (Data out)    │
+              │                  │
+              └──────────────────┘
+
+    Note: Requires 5V power but uses 3.3V logic (safe for ESP32)
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                  ILI9341 2.4" TFT DISPLAY (SPI)                             │
+│                      320x240 Resolution                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+              ┌──────────────────┐
+              │    ILI9341 TFT   │
+              │   2.4" Display   │
+    3.3V ────→│ VCC              │
+    GND  ────→│ GND              │
+    5V   ────→│ LED (Backlight)  │──[100Ω resistor]
+              │                  │
+ GPIO34  ────→│ CS               │
+ GPIO33  ────→│ DC (Data/Cmd)    │
+ GPIO21  ────→│ RST (Reset)      │
+ GPIO35  ────→│ MOSI (SDI)       │
+ GPIO36  ────→│ SCK              │
+ GPIO37  ←────│ MISO (SDO)       │
+              │                  │
+              └──────────────────┘
+
+    For PWM Brightness Control:
+        GPIO16 ──→ 1kΩ ──→ [Q2: 2N2222 Base]
+                           Collector ──→ LED pin
+                           Emitter ───→ GND
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        BUZZER / ALARM OUTPUT                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                    ┌──────────────┐
+ GPIO15  ──[R1:1kΩ]─┤ Base         │
+                    │  Q1:2N2222   │
+            ┌───────┤ Collector    │
+            │       │  NPN         │
+            │   ┌───┤ Emitter      │
+            │   │   └──────────────┘
+            │  GND
+            │
+            │    ┌──[Buzzer+]──┐
+            └────┤  Piezo or   │
+                 │  Active 5V  │
+            5V───┤  Buzzer     │
+                 └─────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            BUTTON INPUTS                                    │
+│                    (All with internal pull-ups)                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    GPIO3  ──→ [Button MODE]    ──→ GND     (Press = LOW)
+    GPIO4  ──→ [Button DISPLAY] ──→ GND     (Press = LOW)
+    GPIO5  ──→ [Button SILENCE] ──→ GND     (Press = LOW)
+
+    Optional Hardware Debounce:
+        Add 100nF capacitor from each GPIO to GND
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                  BATTERY VOLTAGE MONITOR (Optional)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Battery+ ──[R2:10kΩ]──┬──[R3:10kΩ]── GND
+                          │
+                          └──→ GPIO1 (ADC input, max 3.3V)
+
+    Voltage = (ADC_value / 4095) × 3.3V × 2
+
+
+════════════════════════════════════════════════════════════════════════════════
+                              PARTS LIST - NODE
+════════════════════════════════════════════════════════════════════════════════
+
+ICs & Modules:
+    U1  - ESP32-S3-DevKitC-1 (or ESP32-WROOM-32)
+    U2  - RFM95W LoRa Module 915MHz (or 868/433 for other regions)
+    U3  - BME280 Environmental Sensor Breakout
+    U4  - HLK-LD2410 mmWave Presence Detector
+    U5  - ILI9341 2.4" TFT Display Module
+    U6  - LM2596 Buck Converter Module (12V→5V, 3A)
+    U7  - AMS1117-3.3 LDO Regulator
+
+Protection:
+    F1  - 1A Fast-blow Fuse
+    D1  - P6KE18A TVS Diode (transient suppression)
+    D2  - 1N5819 Schottky Diode (reverse polarity protection)
+
+Active Components:
+    Q1  - 2N2222 NPN Transistor (TO-92)
+    Q2  - 2N2222 NPN Transistor (optional, for backlight PWM)
+
+Passive Components:
+    R1  - 1kΩ Resistor (buzzer driver base)
+    R2  - 10kΩ Resistor (voltage divider, optional)
+    R3  - 10kΩ Resistor (voltage divider, optional)
+    R4  - 100Ω Resistor (backlight current limiting)
+    C1  - 100µF Electrolytic (5V rail)
+    C2  - 10µF Electrolytic (3.3V rail)
+    C3  - 100nF Ceramic (ESP32 decoupling)
+    C4  - 100nF Ceramic (LoRa decoupling)
+    C5  - 100nF Ceramic (BME280 decoupling)
+
+Mechanical:
+    SW1 - Tactile Button 6x6mm (MODE)
+    SW2 - Tactile Button 6x6mm (DISPLAY)
+    SW3 - Tactile Button 6x6mm (SILENCE)
+    BZ1 - Piezo Buzzer 5V or Active Buzzer
+
+Connectors:
+    J1  - 2-pin terminal block (12V input)
+    J2  - USB-C connector (programming, on ESP32 board)
+
+Antenna:
+    ANT1 - 8.2cm wire (915MHz) or SMA connector + whip antenna
+
+
+════════════════════════════════════════════════════════════════════════════════
+                           TESTING & VERIFICATION
+════════════════════════════════════════════════════════════════════════════════
+
+Power-Up Sequence:
+    1. Verify 12V input present
+    2. Check 5V rail: Should be 4.9-5.1V
+    3. Check 3.3V rail: Should be 3.2-3.4V
+    4. ESP32 should boot (LED blinks)
+    5. Display should initialize (may show white/color)
+
+I2C Bus Test:
+    Run I2C scanner sketch - should find:
+        • BME280 at address 0x76 or 0x77
+
+LoRa Test:
+    Check RSSI values in serial monitor
+    Should see: -30 to -70 dBm at close range
+
+Signal Integrity:
+    SPI Clock (SCK): Clean square wave, 3.3V amplitude
+    I2C Lines: Should idle HIGH (3.3V) with pull-ups
+
+
+════════════════════════════════════════════════════════════════════════════════
+                              END OF SCHEMATIC
+════════════════════════════════════════════════════════════════════════════════

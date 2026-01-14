@@ -1,0 +1,32 @@
+# Bristol32 External Sensor Node - Netlist Format
+# Format: component_name type value connections...
+
+# Power Supply Section
+V1 voltage 12.0 VCC_IN
+R_REG resistor 100 VCC_IN VCC_3V3
+C_BYPASS capacitor 10uF VCC_3V3 GND
+
+# ESP32 Heltec WiFi LoRa 32 V2
+U1 esp32_heltec ESP32_HELTEC VCC_3V3 GND GPIO13 GPIO21 GPIO22 LORA_NSS LORA_MOSI LORA_MISO LORA_SCK LORA_RST LORA_DIO0
+
+# LoRa SX1276 Module
+U2 sx1276 SX1276 LORA_NSS LORA_MOSI LORA_MISO LORA_SCK LORA_RST LORA_DIO0 VCC_3V3 GND ANTENNA
+
+# mmWave Motion Sensor
+U3 mmwave MMWAVE_SENSOR GPIO13 VCC_3V3 GND
+
+# BME280 Environmental Sensor
+U4 bme280 BME280 GPIO21 GPIO22 VCC_3V3 GND
+
+# SSD1306 OLED Display
+U5 ssd1306 SSD1306_OLED GPIO21 GPIO22 VCC_3V3 GND
+
+# Antenna
+L_ANT inductor 10nH ANTENNA GND
+C_ANT capacitor 1pF ANTENNA GND
+
+# I2C Pull-up Resistors
+R_SDA_PULLUP resistor 4.7k GPIO21 VCC_3V3
+R_SCL_PULLUP resistor 4.7k GPIO22 VCC_3V3
+
+# End of netlist

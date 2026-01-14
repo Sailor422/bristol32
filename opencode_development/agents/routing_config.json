@@ -1,0 +1,83 @@
+{
+  "routing_rules": {
+    "web_search": {
+      "agent": "gemini_agent",
+      "description": "All web searches route to Gemini agent",
+      "keywords": ["web", "search", "google", "internet", "online", "browse"],
+      "priority": 1
+    },
+    "youtube_search": {
+      "agent": "gemini_agent",
+      "description": "All YouTube searches route to Gemini agent",
+      "keywords": ["youtube", "video", "watch", "tutorial", "how to"],
+      "priority": 1
+    },
+    "research": {
+      "agent": "research_agent",
+      "description": "Research tasks use research agent",
+      "keywords": ["research", "investigate", "study", "analyze", "explore"],
+      "priority": 2
+    },
+    "coding": {
+      "agent": "opencode_agent",
+      "description": "Coding tasks use opencode agent",
+      "keywords": ["code", "program", "script", "function", "debug", "develop"],
+      "priority": 2
+    },
+    "prompt_enhancement": {
+      "agent": "claude_agent",
+      "description": "Prompt optimization uses Claude agent",
+      "keywords": ["optimize", "enhance", "improve", "prompt", "rewrite"],
+      "priority": 3
+    },
+     "local_ai": {
+       "agent": "ollama_agent",
+       "description": "Local AI tasks use Ollama agent",
+       "keywords": ["local", "offline", "private", "ollama"],
+       "priority": 4
+     },
+     "prompt_master": {
+       "agent": "prompt_master",
+       "description": "Complex multi-step tasks requiring prompt optimization and agent orchestration",
+       "keywords": ["orchestrate", "coordinate", "multiple", "agents", "complex", "workflow", "delegate"],
+       "priority": 1
+     }
+  },
+  "orchestration_settings": {
+    "auto_route": true,
+    "multi_agent_support": true,
+    "fallback_agent": "ollama_agent",
+    "max_parallel_agents": 3,
+    "timeout_seconds": 300
+  },
+  "agent_capabilities": {
+    "gemini_agent": {
+      "strengths": ["web_search", "youtube_search", "multimodal", "current_events", "direct_interface"],
+      "timeout": 600
+    },
+    "research_agent": {
+      "strengths": ["information_gathering", "analysis", "documentation"],
+      "timeout": 180
+    },
+    "opencode_agent": {
+      "strengths": ["coding", "debugging", "software_engineering"],
+      "timeout": 300
+    },
+    "claude_agent": {
+      "strengths": ["creative_writing", "analysis", "direct_interface"],
+      "timeout": 180
+    },
+    "ollama_agent": {
+      "strengths": ["local_processing", "privacy", "offline_work", "direct_interface"],
+      "timeout": 120
+    },
+     "codex_agent": {
+       "strengths": ["chatgpt_integration", "direct_interface"],
+       "timeout": 180
+     },
+     "prompt_master": {
+       "strengths": ["prompt_optimization", "multi_agent_orchestration", "task_delegation", "workflow_management"],
+       "timeout": 300
+     }
+  }
+}

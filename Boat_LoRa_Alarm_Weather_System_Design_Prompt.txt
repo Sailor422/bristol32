@@ -1,0 +1,113 @@
+Design Prompt:
+
+I want to design a distributed human-detection and environment-monitoring system for use as an **alarm system and doorbell** on a boat.
+
+System concept:
+
+- Multiple **ESP32-based boards with displays**, each acting as a smart node.
+- Each node includes:
+  - A **human presence / movement detector module** (e.g., mmWave human detector).
+  - A **temperature sensor**.
+  - A **humidity sensor**.
+  - A **barometric pressure sensor**.
+  - A **LoRa radio** for communication.
+- Nodes will be placed strategically around the boat (companionway, foredeck, cockpit, interior cabin, etc.).
+- The system will:
+  - Detect humans approaching (for alarm and doorbell functions).
+  - Monitor local environmental conditions.
+  - Display at least the **weather information** (temp/humidity/pressure) on each ESP32’s display.
+  - Communicate all relevant data via LoRa to a central hub or main controller.
+
+Your tasks:
+
+1. **System Architecture**
+   - Propose a clear architecture with:
+     - Node roles (e.g., “doorbell/companionway node,” “deck perimeter node,” “cabin environment node”).
+     - A central hub / base station that receives LoRa messages from all nodes.
+   - Describe how the LoRa network will be organized (topology, addressing, message routing).
+
+2. **Human Detection & Doorbell/Alarm Logic**
+   - Design logic for:
+     - Detecting human approach or presence around boarding areas.
+     - Using this to function as a **doorbell** (e.g., at companionway) and as a **security alarm** for unexpected approach.
+   - Address:
+     - Reducing false alarms caused by wave motion, boat rocking, moving rigging, etc.
+     - Adjustable detection sensitivity and “quiet hours” or arming modes.
+   - Explain how the node signals:
+     - Local alarm indicators (buzzer, LED, or display symbol).
+     - LoRa messages to the central hub and possibly to other nodes.
+
+3. **Environmental Monitoring & Display**
+   - Define how each node will:
+     - Measure temperature, humidity, and barometric pressure.
+     - Format and transmit these readings over LoRa.
+   - Propose:
+     - What information is shown on each ESP32 display by default (e.g., temp, humidity, pressure, trend arrows).
+     - How alarm or doorbell status is visually indicated on the display.
+   - Suggest simple UI ideas (e.g., button press cycles through screens, alarm status icon, etc.).
+
+4. **LoRa Communication Design**
+   - Recommend:
+     - Reasonable LoRa settings for a boat-sized environment (SF, bandwidth, coding rate, etc.).
+     - A simple, robust message format for:
+       - Sensor readings.
+       - Human detection events.
+       - Doorbell presses or approach alerts.
+     - Methods for:
+       - Node addressing and identification.
+       - Handling lost packets or intermittent communication.
+       - Low-power or duty-cycling strategies if nodes may run from batteries.
+
+5. **Central Hub / Controller**
+   - Define what the hub does:
+     - Collects and logs node data (human presence, weather data).
+     - Manages alarm states and arming/disarming logic.
+     - Provides a summary view of conditions around the boat.
+   - Suggest:
+     - Whether the hub is another ESP32, a Raspberry Pi, or similar.
+     - How the hub might display data (bigger screen, web UI, serial console, etc.).
+     - Options for future integration (e.g., sending alerts to a phone, integration with NMEA or navigation systems, etc.).
+
+6. **Additional Boat-Specific Sensors & Functions**
+   - Recommend **other useful sensors or functions** that could share the same ESP32 + LoRa platform, such as:
+     - Bilge water level sensor.
+     - Battery voltage and current monitor.
+     - Engine compartment temperature.
+     - Locker/lazarette humidity for mold prevention.
+     - Hatch/door open/close sensors.
+     - GPS-based anchor drift monitoring.
+     - Wind or external weather sensors.
+   - For each suggested sensor, briefly describe:
+     - How it would connect to the existing nodes or hub.
+     - How its data would be encoded in LoRa messages.
+     - Why it’s particularly useful on a boat.
+
+7. **Firmware & Software Structure**
+   - Outline a high-level firmware architecture for each node:
+     - Sensor polling loops.
+     - LoRa send/receive logic.
+     - Alarm logic.
+     - Display update routines.
+   - Propose a modular design so:
+     - New sensors can be added without major rewrites.
+     - Alarm rules can be extended or customized.
+   - Suggest how configuration (thresholds, node IDs, radio settings) is stored and changed.
+
+8. **Hardware, Power, and Marine Considerations**
+   - Provide guidelines for:
+     - Powering nodes from a 12V DC boat system (regulators, filtering, and protection).
+     - Environmental hardening (moisture, salt air, vibration, etc.).
+     - Placement considerations to balance visibility, effectiveness, and protection from spray.
+   - Address how to mount sensors (especially human detectors and environmental sensors) for best performance on a boat.
+
+9. **Concrete Next Steps**
+   - Give a step-by-step plan for:
+     - Prototyping the first node.
+     - Prototyping the central hub.
+     - Field-testing human detection and LoRa comms.
+     - Iterating on the design once basic functionality is working.
+
+Style:
+- Assume the user is comfortable with ESP32, LoRa, and basic electronics.
+- Focus on practical implementation details and real-world boat usage.
+- Organize your answer with clear headings and bullet lists for easy reading.

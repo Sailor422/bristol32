@@ -1,0 +1,81 @@
+
+BRISTOL32 EXTERNAL SENSOR NODE SCHEMATIC
+=========================================
+
+POWER SUPPLY SECTION:
+---------------------
+12V_MARINE_BATT (+) --> VOLTAGE_REGULATOR --> 3.3V_VCC (+)
+                      |
+                      +--> GND (-)
+
+ESP32 HELTEC WIFI LORA 32 V2:
+-----------------------------
+PIN CONNECTIONS:
+- GPIO13 --> MMWAVE_SENSOR (motion detection)
+- GPIO21 --> I2C_SDA (BME280, SSD1306)
+- GPIO22 --> I2C_SCL (BME280, SSD1306)
+- VCC --> 3.3V_VCC
+- GND --> GND
+
+SX1276 LORA MODULE:
+-------------------
+PIN CONNECTIONS:
+- NSS --> ESP32_SPI_CS
+- MOSI --> ESP32_SPI_MOSI
+- MISO --> ESP32_SPI_MISO
+- SCK --> ESP32_SPI_SCK
+- RST --> ESP32_GPIO_RST
+- DIO0 --> ESP32_GPIO_DIO0
+- ANTENNA --> 433MHz_ANTENNA
+- VCC --> 3.3V_VCC
+- GND --> GND
+
+MMWAVE MOTION SENSOR:
+---------------------
+PIN CONNECTIONS:
+- OUT --> ESP32_GPIO13
+- VCC --> 3.3V_VCC
+- GND --> GND
+
+BME280 ENVIRONMENTAL SENSOR:
+---------------------------
+PIN CONNECTIONS:
+- SDA --> ESP32_GPIO21 (I2C)
+- SCL --> ESP32_GPIO22 (I2C)
+- VCC --> 3.3V_VCC
+- GND --> GND
+
+SSD1306 OLED DISPLAY:
+---------------------
+PIN CONNECTIONS:
+- SDA --> ESP32_GPIO21 (I2C)
+- SCL --> ESP32_GPIO22 (I2C)
+- VCC --> 3.3V_VCC
+- GND --> GND
+
+I2C PULL-UP RESISTORS:
+----------------------
+- 4.7kΩ between SDA (GPIO21) and 3.3V_VCC
+- 4.7kΩ between SCL (GPIO22) and 3.3V_VCC
+
+ANTENNA:
+--------
+- 433MHz whip antenna connected to SX1276 ANTENNA pin
+- Optional: Matching network (LC filter)
+
+POWER CONSUMPTION ESTIMATES:
+----------------------------
+- ESP32: 80-240mA (depending on WiFi/LoRa usage)
+- SX1276: 20-120mA (TX/RX modes)
+- BME280: <1mA
+- SSD1306: 20mA (with backlight)
+- mmWave: 50-100mA
+- TOTAL: ~200-500mA peak
+
+DESIGN NOTES:
+-------------
+- All I2C devices share the same bus (GPIO21/22)
+- SPI bus used for LoRa communication
+- GPIO13 used for motion detection interrupt
+- 12V marine power requires proper voltage regulation
+- Consider ESD protection on antenna and I/O lines

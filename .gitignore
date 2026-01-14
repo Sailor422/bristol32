@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# PlatformIO
+.pio
+.pioenvs
+.piolibdeps
+.idea
+.vscode
+*.log

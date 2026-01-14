@@ -1,0 +1,36 @@
+# Herbert’s Complete IoT Parts Inventory
+
+## Microcontroller & Development Boards
+- **Heltec ESP32 LoRa 0.96" OLED dev board (SX1276, 433–470 MHz)** — Qty: 2
+  - Aliases: Heltec WiFi LoRa 32, Heltec V2, ESP32 LoRa board, 433 MHz, 70 cm, OLED dev board, LoRaWAN node
+
+- **Arduino boards**
+  - Quantity: Not provided (add to update)
+
+- **Additional ESP32 / ESP8266 boards**
+  - Quantity: Not provided
+
+---
+
+## Sensors
+
+### Environmental Sensors
+- **HW-611 (BME280/BMP280 family)** — Qty: multiple
+- **GY-65 (BMP085/BMP180)** — Qty: multiple
+- **DHT11 temperature/humidity modules** — Qty: multiple
+
+### Radar / Presence Sensors
+- **DFRobot C4001 mmWave radar modules**
+  - Quantity: Not provided
+
+---
+
+## Displays
+- **16×2 LCD (HD44780-compatible, blue backlight)** — Qty: 1
+  - Aliases: 1602 LCD, HD44780, 16x2, parallel LCD, blue/white backlight
+
+---
+
+## Notes
+This inventory includes all IoT-related parts mentioned so far.  
+Provide missing quantities to complete the record.

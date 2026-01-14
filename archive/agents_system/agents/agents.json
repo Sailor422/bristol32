@@ -1,0 +1,44 @@
+{
+  "codex_agent": {
+    "name": "Codex Agent",
+    "description": "Direct ChatGPT interface (no Ollama enhancement)",
+    "script": "codex_agent.py",
+    "type": "chatgpt_enhancer",
+    "active": true
+  },
+  "research_agent": {
+    "name": "Research Agent",
+    "description": "Specialized agent for research and information gathering",
+    "script": "research_agent.py",
+    "type": "ollama_only",
+    "active": true
+  },
+  "claude_agent": {
+    "name": "Claude Agent",
+    "description": "Direct Claude AI interface (no Ollama enhancement)",
+    "script": "claude_agent.py",
+    "type": "custom",
+    "active": true
+  },
+  "opencode_agent": {
+    "name": "OpenCode Agent",
+    "description": "Agent that uses opencode CLI capabilities for software engineering tasks",
+    "script": "opencode_agent.py",
+    "type": "custom",
+    "active": true
+  },
+  "gemini_agent": {
+    "name": "Gemini Agent",
+    "description": "Direct Google Gemini AI interface (no Ollama enhancement)",
+    "script": "gemini_agent.py",
+    "type": "custom",
+    "active": true
+  },
+  "ollama_agent": {
+    "name": "Ollama Agent",
+    "description": "Local AI agent using Ollama for responses and analysis (no enhancement)",
+    "script": "ollama_agent.py",
+    "type": "ollama_only",
+    "active": true
+  }
+}

@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>boat_monitoring_system_overview</title>
+  <style>
+
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+  <link href="data:text/css; charset=utf-8;charset=utf-8,%40media%20%28prefers%2Dcolor%2Dscheme%3Adark%29%7B%2Emarkdown%2Dbody%7Bcolor%2Dscheme%3Adark%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcomment%3A%238b949e%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dconstant%3A%2379c0ff%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dentity%3A%23d2a8ff%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstorage%2Dmodifier%2Dimport%3A%23c9d1d9%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dentity%2Dtag%3A%237ee787%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dkeyword%3A%23ff7b72%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstring%3A%23a5d6ff%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dvariable%3A%23ffa657%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dbrackethighlighter%2Dunmatched%3A%23f85149%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dinvalid%2Dillegal%2Dtext%3A%23f0f6fc%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dinvalid%2Dillegal%2Dbg%3A%238e1519%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcarriage%2Dreturn%2Dtext%3A%23f0f6fc%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcarriage%2Dreturn%2Dbg%3A%23b62324%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstring%2Dregexp%3A%237ee787%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dlist%3A%23f2cc60%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dheading%3A%231f6feb%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ditalic%3A%23c9d1d9%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dbold%3A%23c9d1d9%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ddeleted%2Dtext%3A%23ffdcd7%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ddeleted%2Dbg%3A%2367060c%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dinserted%2Dtext%3A%23aff5b4%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dinserted%2Dbg%3A%23033a16%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dchanged%2Dtext%3A%23ffdfb6%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dchanged%2Dbg%3A%235a1e02%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dignored%2Dtext%3A%23c9d1d9%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dignored%2Dbg%3A%231158c7%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmeta%2Ddiff%2Drange%3A%23d2a8ff%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dbrackethighlighter%2Dangle%3A%238b949e%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dsublimelinter%2Dgutter%2Dmark%3A%23484f58%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dconstant%2Dother%2Dreference%2Dlink%3A%23a5d6ff%3B%2D%2Dcolor%2Dfg%2Ddefault%3A%23c9d1d9%3B%2D%2Dcolor%2Dfg%2Dmuted%3A%238b949e%3B%2D%2Dcolor%2Dfg%2Dsubtle%3A%23484f58%3B%2D%2Dcolor%2Dcanvas%2Ddefault%3A%230d1117%3B%2D%2Dcolor%2Dcanvas%2Dsubtle%3A%23161b22%3B%2D%2Dcolor%2Dborder%2Ddefault%3A%2330363d%3B%2D%2Dcolor%2Dborder%2Dmuted%3A%2321262d%3B%2D%2Dcolor%2Dneutral%2Dmuted%3Argba%28110%2C118%2C129%2C0%2E4%29%3B%2D%2Dcolor%2Daccent%2Dfg%3A%2358a6ff%3B%2D%2Dcolor%2Daccent%2Demphasis%3A%231f6feb%3B%2D%2Dcolor%2Dattention%2Dsubtle%3Argba%28187%2C128%2C9%2C0%2E15%29%3B%2D%2Dcolor%2Ddanger%2Dfg%3A%23f85149%7D%7D%40media%20%28prefers%2Dcolor%2Dscheme%3Alight%29%7B%2Emarkdown%2Dbody%7Bcolor%2Dscheme%3Alight%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcomment%3A%236e7781%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dconstant%3A%230550ae%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dentity%3A%238250df%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstorage%2Dmodifier%2Dimport%3A%2324292f%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dentity%2Dtag%3A%23116329%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dkeyword%3A%23cf222e%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstring%3A%230a3069%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dvariable%3A%23953800%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dbrackethighlighter%2Dunmatched%3A%2382071e%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dinvalid%2Dillegal%2Dtext%3A%23f6f8fa%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dinvalid%2Dillegal%2Dbg%3A%2382071e%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcarriage%2Dreturn%2Dtext%3A%23f6f8fa%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcarriage%2Dreturn%2Dbg%3A%23cf222e%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstring%2Dregexp%3A%23116329%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dlist%3A%233b2300%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dheading%3A%230550ae%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ditalic%3A%2324292f%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dbold%3A%2324292f%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ddeleted%2Dtext%3A%2382071e%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ddeleted%2Dbg%3A%23FFEBE9%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dinserted%2Dtext%3A%23116329%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dinserted%2Dbg%3A%23dafbe1%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dchanged%2Dtext%3A%23953800%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dchanged%2Dbg%3A%23ffd8b5%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dignored%2Dtext%3A%23eaeef2%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dignored%2Dbg%3A%230550ae%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmeta%2Ddiff%2Drange%3A%238250df%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dbrackethighlighter%2Dangle%3A%2357606a%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dsublimelinter%2Dgutter%2Dmark%3A%238c959f%3B%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dconstant%2Dother%2Dreference%2Dlink%3A%230a3069%3B%2D%2Dcolor%2Dfg%2Ddefault%3A%2324292f%3B%2D%2Dcolor%2Dfg%2Dmuted%3A%2357606a%3B%2D%2Dcolor%2Dfg%2Dsubtle%3A%236e7781%3B%2D%2Dcolor%2Dcanvas%2Ddefault%3A%23ffffff%3B%2D%2Dcolor%2Dcanvas%2Dsubtle%3A%23f6f8fa%3B%2D%2Dcolor%2Dborder%2Ddefault%3A%23d0d7de%3B%2D%2Dcolor%2Dborder%2Dmuted%3Ahsla%28210%2C18%25%2C87%25%2C1%29%3B%2D%2Dcolor%2Dneutral%2Dmuted%3Argba%28175%2C184%2C193%2C0%2E2%29%3B%2D%2Dcolor%2Daccent%2Dfg%3A%230969da%3B%2D%2Dcolor%2Daccent%2Demphasis%3A%230969da%3B%2D%2Dcolor%2Dattention%2Dsubtle%3A%23fff8c5%3B%2D%2Dcolor%2Ddanger%2Dfg%3A%23cf222e%7D%7D%2Emarkdown%2Dbody%7B%2Dms%2Dtext%2Dsize%2Dadjust%3A100%25%3B%2Dwebkit%2Dtext%2Dsize%2Dadjust%3A100%25%3Bmargin%3A0%3Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Ddefault%29%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dcanvas%2Ddefault%29%3Bfont%2Dfamily%3A%2Dapple%2Dsystem%2CBlinkMacSystemFont%2C%22Segoe%20UI%22%2CHelvetica%2CArial%2Csans%2Dserif%2C%22Apple%20Color%20Emoji%22%2C%22Segoe%20UI%20Emoji%22%3Bfont%2Dsize%3A16px%3Bline%2Dheight%3A1%2E5%3Bword%2Dwrap%3Abreak%2Dword%7D%2Emarkdown%2Dbody%20%2Eocticon%7Bdisplay%3Ainline%2Dblock%3Bfill%3AcurrentColor%3Bvertical%2Dalign%3Atext%2Dbottom%7D%2Emarkdown%2Dbody%20h1%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%3Abefore%2C%2Emarkdown%2Dbody%20h2%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%3Abefore%2C%2Emarkdown%2Dbody%20h3%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%3Abefore%2C%2Emarkdown%2Dbody%20h4%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%3Abefore%2C%2Emarkdown%2Dbody%20h5%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%3Abefore%2C%2Emarkdown%2Dbody%20h6%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%3Abefore%7Bwidth%3A16px%3Bheight%3A16px%3Bcontent%3A%27%20%27%3Bdisplay%3Ainline%2Dblock%3Bbackground%2Dcolor%3AcurrentColor%3B%2Dwebkit%2Dmask%2Dimage%3Aurl%28%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww%2Ew3%2Eorg%2F2000%2Fsvg%27%20viewBox%3D%270%200%2016%2016%27%20version%3D%271%2E1%27%20aria%2Dhidden%3D%27true%27%3E%3Cpath%20fill%2Drule%3D%27evenodd%27%20d%3D%27M7%2E775%203%2E275a%2E75%2E75%200%20001%2E06%201%2E06l1%2E25%2D1%2E25a2%202%200%20112%2E83%202%2E83l%2D2%2E5%202%2E5a2%202%200%2001%2D2%2E83%200%20%2E75%2E75%200%2000%2D1%2E06%201%2E06%203%2E5%203%2E5%200%20004%2E95%200l2%2E5%2D2%2E5a3%2E5%203%2E5%200%2000%2D4%2E95%2D4%2E95l%2D1%2E25%201%2E25zm%2D4%2E69%209%2E64a2%202%200%20010%2D2%2E83l2%2E5%2D2%2E5a2%202%200%20012%2E83%200%20%2E75%2E75%200%20001%2E06%2D1%2E06%203%2E5%203%2E5%200%2000%2D4%2E95%200l%2D2%2E5%202%2E5a3%2E5%203%2E5%200%20004%2E95%204%2E95l1%2E25%2D1%2E25a%2E75%2E75%200%2000%2D1%2E06%2D1%2E06l%2D1%2E25%201%2E25a2%202%200%2001%2D2%2E83%200z%27%3E%3C%2Fpath%3E%3C%2Fsvg%3E%22%29%3Bmask%2Dimage%3Aurl%28%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww%2Ew3%2Eorg%2F2000%2Fsvg%27%20viewBox%3D%270%200%2016%2016%27%20version%3D%271%2E1%27%20aria%2Dhidden%3D%27true%27%3E%3Cpath%20fill%2Drule%3D%27evenodd%27%20d%3D%27M7%2E775%203%2E275a%2E75%2E75%200%20001%2E06%201%2E06l1%2E25%2D1%2E25a2%202%200%20112%2E83%202%2E83l%2D2%2E5%202%2E5a2%202%200%2001%2D2%2E83%200%20%2E75%2E75%200%2000%2D1%2E06%201%2E06%203%2E5%203%2E5%200%20004%2E95%200l2%2E5%2D2%2E5a3%2E5%203%2E5%200%2000%2D4%2E95%2D4%2E95l%2D1%2E25%201%2E25zm%2D4%2E69%209%2E64a2%202%200%20010%2D2%2E83l2%2E5%2D2%2E5a2%202%200%20012%2E83%200%20%2E75%2E75%200%20001%2E06%2D1%2E06%203%2E5%203%2E5%200%2000%2D4%2E95%200l%2D2%2E5%202%2E5a3%2E5%203%2E5%200%20004%2E95%204%2E95l1%2E25%2D1%2E25a%2E75%2E75%200%2000%2D1%2E06%2D1%2E06l%2D1%2E25%201%2E25a2%202%200%2001%2D2%2E83%200z%27%3E%3C%2Fpath%3E%3C%2Fsvg%3E%22%29%7D%2Emarkdown%2Dbody%20details%2C%2Emarkdown%2Dbody%20figcaption%2C%2Emarkdown%2Dbody%20figure%7Bdisplay%3Ablock%7D%2Emarkdown%2Dbody%20summary%7Bdisplay%3Alist%2Ditem%7D%2Emarkdown%2Dbody%20%5Bhidden%5D%7Bdisplay%3Anone%21important%7D%2Emarkdown%2Dbody%20a%7Bbackground%2Dcolor%3Atransparent%3Bcolor%3Avar%28%2D%2Dcolor%2Daccent%2Dfg%29%3Btext%2Ddecoration%3Anone%7D%2Emarkdown%2Dbody%20a%3Aactive%2C%2Emarkdown%2Dbody%20a%3Ahover%7Boutline%2Dwidth%3A0%7D%2Emarkdown%2Dbody%20abbr%5Btitle%5D%7Bborder%2Dbottom%3Anone%3Btext%2Ddecoration%3Aunderline%20dotted%7D%2Emarkdown%2Dbody%20b%2C%2Emarkdown%2Dbody%20strong%7Bfont%2Dweight%3A600%7D%2Emarkdown%2Dbody%20dfn%7Bfont%2Dstyle%3Aitalic%7D%2Emarkdown%2Dbody%20h1%7Bmargin%3A%2E67em%200%3Bfont%2Dweight%3A600%3Bpadding%2Dbottom%3A%2E3em%3Bfont%2Dsize%3A2em%3Bborder%2Dbottom%3A1px%20solid%20var%28%2D%2Dcolor%2Dborder%2Dmuted%29%7D%2Emarkdown%2Dbody%20mark%7Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dattention%2Dsubtle%29%3Bcolor%3Avar%28%2D%2Dcolor%2Dtext%2Dprimary%29%7D%2Emarkdown%2Dbody%20small%7Bfont%2Dsize%3A90%25%7D%2Emarkdown%2Dbody%20sub%2C%2Emarkdown%2Dbody%20sup%7Bfont%2Dsize%3A75%25%3Bline%2Dheight%3A0%3Bposition%3Arelative%3Bvertical%2Dalign%3Abaseline%7D%2Emarkdown%2Dbody%20sub%7Bbottom%3A%2D%2E25em%7D%2Emarkdown%2Dbody%20sup%7Btop%3A%2D%2E5em%7D%2Emarkdown%2Dbody%20img%7Bborder%2Dstyle%3Anone%3Bmax%2Dwidth%3A100%25%3Bbox%2Dsizing%3Acontent%2Dbox%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dcanvas%2Ddefault%29%7D%2Emarkdown%2Dbody%20code%2C%2Emarkdown%2Dbody%20kbd%2C%2Emarkdown%2Dbody%20pre%2C%2Emarkdown%2Dbody%20samp%7Bfont%2Dfamily%3Amonospace%2Cmonospace%3Bfont%2Dsize%3A1em%7D%2Emarkdown%2Dbody%20figure%7Bmargin%3A1em%2040px%7D%2Emarkdown%2Dbody%20hr%7Bbox%2Dsizing%3Acontent%2Dbox%3Boverflow%3Ahidden%3Bbackground%3A0%200%3Bborder%2Dbottom%3A1px%20solid%20var%28%2D%2Dcolor%2Dborder%2Dmuted%29%3Bheight%3A%2E25em%3Bpadding%3A0%3Bmargin%3A24px%200%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dborder%2Ddefault%29%3Bborder%3A0%7D%2Emarkdown%2Dbody%20input%7Bfont%3Ainherit%3Bmargin%3A0%3Boverflow%3Avisible%3Bfont%2Dfamily%3Ainherit%3Bfont%2Dsize%3Ainherit%3Bline%2Dheight%3Ainherit%7D%2Emarkdown%2Dbody%20%5Btype%3Dbutton%5D%2C%2Emarkdown%2Dbody%20%5Btype%3Dreset%5D%2C%2Emarkdown%2Dbody%20%5Btype%3Dsubmit%5D%7B%2Dwebkit%2Dappearance%3Abutton%7D%2Emarkdown%2Dbody%20%5Btype%3Dbutton%5D%3A%3A%2Dmoz%2Dfocus%2Dinner%2C%2Emarkdown%2Dbody%20%5Btype%3Dreset%5D%3A%3A%2Dmoz%2Dfocus%2Dinner%2C%2Emarkdown%2Dbody%20%5Btype%3Dsubmit%5D%3A%3A%2Dmoz%2Dfocus%2Dinner%7Bborder%2Dstyle%3Anone%3Bpadding%3A0%7D%2Emarkdown%2Dbody%20%5Btype%3Dbutton%5D%3A%2Dmoz%2Dfocusring%2C%2Emarkdown%2Dbody%20%5Btype%3Dreset%5D%3A%2Dmoz%2Dfocusring%2C%2Emarkdown%2Dbody%20%5Btype%3Dsubmit%5D%3A%2Dmoz%2Dfocusring%7Boutline%3A1px%20dotted%20ButtonText%7D%2Emarkdown%2Dbody%20%5Btype%3Dcheckbox%5D%2C%2Emarkdown%2Dbody%20%5Btype%3Dradio%5D%7Bbox%2Dsizing%3Aborder%2Dbox%3Bpadding%3A0%7D%2Emarkdown%2Dbody%20%5Btype%3Dnumber%5D%3A%3A%2Dwebkit%2Dinner%2Dspin%2Dbutton%2C%2Emarkdown%2Dbody%20%5Btype%3Dnumber%5D%3A%3A%2Dwebkit%2Douter%2Dspin%2Dbutton%7Bheight%3Aauto%7D%2Emarkdown%2Dbody%20%5Btype%3Dsearch%5D%7B%2Dwebkit%2Dappearance%3Atextfield%3Boutline%2Doffset%3A%2D2px%7D%2Emarkdown%2Dbody%20%5Btype%3Dsearch%5D%3A%3A%2Dwebkit%2Dsearch%2Dcancel%2Dbutton%2C%2Emarkdown%2Dbody%20%5Btype%3Dsearch%5D%3A%3A%2Dwebkit%2Dsearch%2Ddecoration%7B%2Dwebkit%2Dappearance%3Anone%7D%2Emarkdown%2Dbody%20%3A%3A%2Dwebkit%2Dinput%2Dplaceholder%7Bcolor%3Ainherit%3Bopacity%3A%2E54%7D%2Emarkdown%2Dbody%20%3A%3A%2Dwebkit%2Dfile%2Dupload%2Dbutton%7B%2Dwebkit%2Dappearance%3Abutton%3Bfont%3Ainherit%7D%2Emarkdown%2Dbody%20a%3Ahover%7Btext%2Ddecoration%3Aunderline%7D%2Emarkdown%2Dbody%20hr%3A%3Abefore%7Bdisplay%3Atable%3Bcontent%3A%22%22%7D%2Emarkdown%2Dbody%20hr%3A%3Aafter%7Bdisplay%3Atable%3Bclear%3Aboth%3Bcontent%3A%22%22%7D%2Emarkdown%2Dbody%20table%7Bborder%2Dspacing%3A0%3Bborder%2Dcollapse%3Acollapse%3Bdisplay%3Ablock%3Bwidth%3Amax%2Dcontent%3Bmax%2Dwidth%3A100%25%3Boverflow%3Aauto%7D%2Emarkdown%2Dbody%20td%2C%2Emarkdown%2Dbody%20th%7Bpadding%3A0%7D%2Emarkdown%2Dbody%20details%20summary%7Bcursor%3Apointer%7D%2Emarkdown%2Dbody%20details%3Anot%28%5Bopen%5D%29%3E%3Anot%28summary%29%7Bdisplay%3Anone%21important%7D%2Emarkdown%2Dbody%20kbd%7Bdisplay%3Ainline%2Dblock%3Bpadding%3A3px%205px%3Bfont%3A11px%20ui%2Dmonospace%2CSFMono%2DRegular%2CSF%20Mono%2CMenlo%2CConsolas%2CLiberation%20Mono%2Cmonospace%3Bline%2Dheight%3A10px%3Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Ddefault%29%3Bvertical%2Dalign%3Amiddle%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dcanvas%2Dsubtle%29%3Bborder%3Asolid%201px%20var%28%2D%2Dcolor%2Dneutral%2Dmuted%29%3Bborder%2Dbottom%2Dcolor%3Avar%28%2D%2Dcolor%2Dneutral%2Dmuted%29%3Bborder%2Dradius%3A6px%3Bbox%2Dshadow%3Ainset%200%20%2D1px%200%20var%28%2D%2Dcolor%2Dneutral%2Dmuted%29%7D%2Emarkdown%2Dbody%20h1%2C%2Emarkdown%2Dbody%20h2%2C%2Emarkdown%2Dbody%20h3%2C%2Emarkdown%2Dbody%20h4%2C%2Emarkdown%2Dbody%20h5%2C%2Emarkdown%2Dbody%20h6%7Bmargin%2Dtop%3A24px%3Bmargin%2Dbottom%3A16px%3Bfont%2Dweight%3A600%3Bline%2Dheight%3A1%2E25%7D%2Emarkdown%2Dbody%20h2%7Bfont%2Dweight%3A600%3Bpadding%2Dbottom%3A%2E3em%3Bfont%2Dsize%3A1%2E5em%3Bborder%2Dbottom%3A1px%20solid%20var%28%2D%2Dcolor%2Dborder%2Dmuted%29%7D%2Emarkdown%2Dbody%20h3%7Bfont%2Dweight%3A600%3Bfont%2Dsize%3A1%2E25em%7D%2Emarkdown%2Dbody%20h4%7Bfont%2Dweight%3A600%3Bfont%2Dsize%3A1em%7D%2Emarkdown%2Dbody%20h5%7Bfont%2Dweight%3A600%3Bfont%2Dsize%3A%2E875em%7D%2Emarkdown%2Dbody%20h6%7Bfont%2Dweight%3A600%3Bfont%2Dsize%3A%2E85em%3Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Dmuted%29%7D%2Emarkdown%2Dbody%20p%7Bmargin%2Dtop%3A0%3Bmargin%2Dbottom%3A10px%7D%2Emarkdown%2Dbody%20blockquote%7Bmargin%3A0%3Bpadding%3A0%201em%3Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Dmuted%29%3Bborder%2Dleft%3A%2E25em%20solid%20var%28%2D%2Dcolor%2Dborder%2Ddefault%29%7D%2Emarkdown%2Dbody%20ol%2C%2Emarkdown%2Dbody%20ul%7Bmargin%2Dtop%3A0%3Bmargin%2Dbottom%3A0%3Bpadding%2Dleft%3A2em%7D%2Emarkdown%2Dbody%20ol%20ol%2C%2Emarkdown%2Dbody%20ul%20ol%7Blist%2Dstyle%2Dtype%3Alower%2Droman%7D%2Emarkdown%2Dbody%20ol%20ol%20ol%2C%2Emarkdown%2Dbody%20ol%20ul%20ol%2C%2Emarkdown%2Dbody%20ul%20ol%20ol%2C%2Emarkdown%2Dbody%20ul%20ul%20ol%7Blist%2Dstyle%2Dtype%3Alower%2Dalpha%7D%2Emarkdown%2Dbody%20dd%7Bmargin%2Dleft%3A0%7D%2Emarkdown%2Dbody%20code%2C%2Emarkdown%2Dbody%20tt%7Bfont%2Dfamily%3Aui%2Dmonospace%2CSFMono%2DRegular%2CSF%20Mono%2CMenlo%2CConsolas%2CLiberation%20Mono%2Cmonospace%3Bfont%2Dsize%3A12px%7D%2Emarkdown%2Dbody%20pre%7Bmargin%2Dtop%3A0%3Bmargin%2Dbottom%3A0%3Bfont%2Dfamily%3Aui%2Dmonospace%2CSFMono%2DRegular%2CSF%20Mono%2CMenlo%2CConsolas%2CLiberation%20Mono%2Cmonospace%3Bfont%2Dsize%3A12px%3Bword%2Dwrap%3Anormal%7D%2Emarkdown%2Dbody%20%2Eocticon%7Bdisplay%3Ainline%2Dblock%3Boverflow%3Avisible%21important%3Bvertical%2Dalign%3Atext%2Dbottom%3Bfill%3AcurrentColor%7D%2Emarkdown%2Dbody%20%3A%3Aplaceholder%7Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Dsubtle%29%3Bopacity%3A1%7D%2Emarkdown%2Dbody%20input%3A%3A%2Dwebkit%2Dinner%2Dspin%2Dbutton%2C%2Emarkdown%2Dbody%20input%3A%3A%2Dwebkit%2Douter%2Dspin%2Dbutton%7Bmargin%3A0%3B%2Dwebkit%2Dappearance%3Anone%3Bappearance%3Anone%7D%2Emarkdown%2Dbody%20%2Epl%2Dc%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcomment%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dc1%2C%2Emarkdown%2Dbody%20%2Epl%2Ds%20%2Epl%2Dv%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dconstant%29%7D%2Emarkdown%2Dbody%20%2Epl%2De%2C%2Emarkdown%2Dbody%20%2Epl%2Den%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dentity%29%7D%2Emarkdown%2Dbody%20%2Epl%2Ds%20%2Epl%2Ds1%2C%2Emarkdown%2Dbody%20%2Epl%2Dsmi%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstorage%2Dmodifier%2Dimport%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dent%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dentity%2Dtag%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dk%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dkeyword%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dpds%2C%2Emarkdown%2Dbody%20%2Epl%2Ds%2C%2Emarkdown%2Dbody%20%2Epl%2Ds%20%2Epl%2Dpse%20%2Epl%2Ds1%2C%2Emarkdown%2Dbody%20%2Epl%2Dsr%2C%2Emarkdown%2Dbody%20%2Epl%2Dsr%20%2Epl%2Dcce%2C%2Emarkdown%2Dbody%20%2Epl%2Dsr%20%2Epl%2Dsra%2C%2Emarkdown%2Dbody%20%2Epl%2Dsr%20%2Epl%2Dsre%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstring%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dsmw%2C%2Emarkdown%2Dbody%20%2Epl%2Dv%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dvariable%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dbu%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dbrackethighlighter%2Dunmatched%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dii%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dinvalid%2Dillegal%2Dtext%29%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dinvalid%2Dillegal%2Dbg%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dc2%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcarriage%2Dreturn%2Dtext%29%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dcarriage%2Dreturn%2Dbg%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dsr%20%2Epl%2Dcce%7Bfont%2Dweight%3A700%3Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dstring%2Dregexp%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dml%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dlist%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dmh%2C%2Emarkdown%2Dbody%20%2Epl%2Dmh%20%2Epl%2Den%2C%2Emarkdown%2Dbody%20%2Epl%2Dms%7Bfont%2Dweight%3A700%3Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dheading%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dmi%7Bfont%2Dstyle%3Aitalic%3Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ditalic%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dmb%7Bfont%2Dweight%3A700%3Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dbold%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dmd%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ddeleted%2Dtext%29%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Ddeleted%2Dbg%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dmi1%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dinserted%2Dtext%29%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dinserted%2Dbg%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dmc%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dchanged%2Dtext%29%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dchanged%2Dbg%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dmi2%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dignored%2Dtext%29%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmarkup%2Dignored%2Dbg%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dmdr%7Bfont%2Dweight%3A700%3Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dmeta%2Ddiff%2Drange%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dba%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dbrackethighlighter%2Dangle%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dsg%7Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dsublimelinter%2Dgutter%2Dmark%29%7D%2Emarkdown%2Dbody%20%2Epl%2Dcorl%7Btext%2Ddecoration%3Aunderline%3Bcolor%3Avar%28%2D%2Dcolor%2Dprettylights%2Dsyntax%2Dconstant%2Dother%2Dreference%2Dlink%29%7D%2Emarkdown%2Dbody%20%5Bdata%2Dcatalyst%5D%7Bdisplay%3Ablock%7D%2Emarkdown%2Dbody%20g%2Demoji%7Bfont%2Dfamily%3A%22Apple%20Color%20Emoji%22%2C%22Segoe%20UI%20Emoji%22%2C%22Segoe%20UI%20Symbol%22%3Bfont%2Dsize%3A1em%3Bfont%2Dstyle%3Anormal%21important%3Bfont%2Dweight%3A400%3Bline%2Dheight%3A1%3Bvertical%2Dalign%3A%2D%2E075em%7D%2Emarkdown%2Dbody%20g%2Demoji%20img%7Bwidth%3A1em%3Bheight%3A1em%7D%2Emarkdown%2Dbody%3A%3Abefore%7Bdisplay%3Atable%3Bcontent%3A%22%22%7D%2Emarkdown%2Dbody%3A%3Aafter%7Bdisplay%3Atable%3Bclear%3Aboth%3Bcontent%3A%22%22%7D%2Emarkdown%2Dbody%3E%3Afirst%2Dchild%7Bmargin%2Dtop%3A0%21important%7D%2Emarkdown%2Dbody%3E%3Alast%2Dchild%7Bmargin%2Dbottom%3A0%21important%7D%2Emarkdown%2Dbody%20a%3Anot%28%5Bhref%5D%29%7Bcolor%3Ainherit%3Btext%2Ddecoration%3Anone%7D%2Emarkdown%2Dbody%20%2Eabsent%7Bcolor%3Avar%28%2D%2Dcolor%2Ddanger%2Dfg%29%7D%2Emarkdown%2Dbody%20%2Eanchor%7Bfloat%3Aleft%3Bpadding%2Dright%3A4px%3Bmargin%2Dleft%3A%2D20px%3Bline%2Dheight%3A1%7D%2Emarkdown%2Dbody%20%2Eanchor%3Afocus%7Boutline%3A0%7D%2Emarkdown%2Dbody%20blockquote%2C%2Emarkdown%2Dbody%20details%2C%2Emarkdown%2Dbody%20dl%2C%2Emarkdown%2Dbody%20ol%2C%2Emarkdown%2Dbody%20p%2C%2Emarkdown%2Dbody%20pre%2C%2Emarkdown%2Dbody%20table%2C%2Emarkdown%2Dbody%20ul%7Bmargin%2Dtop%3A0%3Bmargin%2Dbottom%3A16px%7D%2Emarkdown%2Dbody%20blockquote%3E%3Afirst%2Dchild%7Bmargin%2Dtop%3A0%7D%2Emarkdown%2Dbody%20blockquote%3E%3Alast%2Dchild%7Bmargin%2Dbottom%3A0%7D%2Emarkdown%2Dbody%20sup%3Ea%3A%3Abefore%7Bcontent%3A%22%5B%22%7D%2Emarkdown%2Dbody%20sup%3Ea%3A%3Aafter%7Bcontent%3A%22%5D%22%7D%2Emarkdown%2Dbody%20h1%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h2%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h3%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h4%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h5%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h6%20%2Eocticon%2Dlink%7Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Ddefault%29%3Bvertical%2Dalign%3Amiddle%3Bvisibility%3Ahidden%7D%2Emarkdown%2Dbody%20h1%3Ahover%20%2Eanchor%2C%2Emarkdown%2Dbody%20h2%3Ahover%20%2Eanchor%2C%2Emarkdown%2Dbody%20h3%3Ahover%20%2Eanchor%2C%2Emarkdown%2Dbody%20h4%3Ahover%20%2Eanchor%2C%2Emarkdown%2Dbody%20h5%3Ahover%20%2Eanchor%2C%2Emarkdown%2Dbody%20h6%3Ahover%20%2Eanchor%7Btext%2Ddecoration%3Anone%7D%2Emarkdown%2Dbody%20h1%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h2%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h3%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h4%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h5%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%2C%2Emarkdown%2Dbody%20h6%3Ahover%20%2Eanchor%20%2Eocticon%2Dlink%7Bvisibility%3Avisible%7D%2Emarkdown%2Dbody%20h1%20code%2C%2Emarkdown%2Dbody%20h1%20tt%2C%2Emarkdown%2Dbody%20h2%20code%2C%2Emarkdown%2Dbody%20h2%20tt%2C%2Emarkdown%2Dbody%20h3%20code%2C%2Emarkdown%2Dbody%20h3%20tt%2C%2Emarkdown%2Dbody%20h4%20code%2C%2Emarkdown%2Dbody%20h4%20tt%2C%2Emarkdown%2Dbody%20h5%20code%2C%2Emarkdown%2Dbody%20h5%20tt%2C%2Emarkdown%2Dbody%20h6%20code%2C%2Emarkdown%2Dbody%20h6%20tt%7Bpadding%3A0%20%2E2em%3Bfont%2Dsize%3Ainherit%7D%2Emarkdown%2Dbody%20ol%2Eno%2Dlist%2C%2Emarkdown%2Dbody%20ul%2Eno%2Dlist%7Bpadding%3A0%3Blist%2Dstyle%2Dtype%3Anone%7D%2Emarkdown%2Dbody%20ol%5Btype%3D%221%22%5D%7Blist%2Dstyle%2Dtype%3Adecimal%7D%2Emarkdown%2Dbody%20ol%5Btype%3Da%5D%7Blist%2Dstyle%2Dtype%3Alower%2Dalpha%7D%2Emarkdown%2Dbody%20ol%5Btype%3Di%5D%7Blist%2Dstyle%2Dtype%3Alower%2Droman%7D%2Emarkdown%2Dbody%20div%3Eol%3Anot%28%5Btype%5D%29%7Blist%2Dstyle%2Dtype%3Adecimal%7D%2Emarkdown%2Dbody%20ol%20ol%2C%2Emarkdown%2Dbody%20ol%20ul%2C%2Emarkdown%2Dbody%20ul%20ol%2C%2Emarkdown%2Dbody%20ul%20ul%7Bmargin%2Dtop%3A0%3Bmargin%2Dbottom%3A0%7D%2Emarkdown%2Dbody%20li%3Ep%7Bmargin%2Dtop%3A16px%7D%2Emarkdown%2Dbody%20li%2Bli%7Bmargin%2Dtop%3A%2E25em%7D%2Emarkdown%2Dbody%20dl%7Bpadding%3A0%7D%2Emarkdown%2Dbody%20dl%20dt%7Bpadding%3A0%3Bmargin%2Dtop%3A16px%3Bfont%2Dsize%3A1em%3Bfont%2Dstyle%3Aitalic%3Bfont%2Dweight%3A600%7D%2Emarkdown%2Dbody%20dl%20dd%7Bpadding%3A0%2016px%3Bmargin%2Dbottom%3A16px%7D%2Emarkdown%2Dbody%20table%20th%7Bfont%2Dweight%3A600%7D%2Emarkdown%2Dbody%20table%20td%2C%2Emarkdown%2Dbody%20table%20th%7Bpadding%3A6px%2013px%3Bborder%3A1px%20solid%20var%28%2D%2Dcolor%2Dborder%2Ddefault%29%7D%2Emarkdown%2Dbody%20table%20tr%7Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dcanvas%2Ddefault%29%3Bborder%2Dtop%3A1px%20solid%20var%28%2D%2Dcolor%2Dborder%2Dmuted%29%7D%2Emarkdown%2Dbody%20table%20tr%3Anth%2Dchild%282n%29%7Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dcanvas%2Dsubtle%29%7D%2Emarkdown%2Dbody%20table%20img%7Bbackground%2Dcolor%3Atransparent%7D%2Emarkdown%2Dbody%20img%5Balign%3Dright%5D%7Bpadding%2Dleft%3A20px%7D%2Emarkdown%2Dbody%20img%5Balign%3Dleft%5D%7Bpadding%2Dright%3A20px%7D%2Emarkdown%2Dbody%20%2Eemoji%7Bmax%2Dwidth%3Anone%3Bvertical%2Dalign%3Atext%2Dtop%3Bbackground%2Dcolor%3Atransparent%7D%2Emarkdown%2Dbody%20span%2Eframe%7Bdisplay%3Ablock%3Boverflow%3Ahidden%7D%2Emarkdown%2Dbody%20span%2Eframe%3Espan%7Bdisplay%3Ablock%3Bfloat%3Aleft%3Bwidth%3Aauto%3Bpadding%3A7px%3Bmargin%3A13px%200%200%3Boverflow%3Ahidden%3Bborder%3A1px%20solid%20var%28%2D%2Dcolor%2Dborder%2Ddefault%29%7D%2Emarkdown%2Dbody%20span%2Eframe%20span%20img%7Bdisplay%3Ablock%3Bfloat%3Aleft%7D%2Emarkdown%2Dbody%20span%2Eframe%20span%20span%7Bdisplay%3Ablock%3Bpadding%3A5px%200%200%3Bclear%3Aboth%3Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Ddefault%29%7D%2Emarkdown%2Dbody%20span%2Ealign%2Dcenter%7Bdisplay%3Ablock%3Boverflow%3Ahidden%3Bclear%3Aboth%7D%2Emarkdown%2Dbody%20span%2Ealign%2Dcenter%3Espan%7Bdisplay%3Ablock%3Bmargin%3A13px%20auto%200%3Boverflow%3Ahidden%3Btext%2Dalign%3Acenter%7D%2Emarkdown%2Dbody%20span%2Ealign%2Dcenter%20span%20img%7Bmargin%3A0%20auto%3Btext%2Dalign%3Acenter%7D%2Emarkdown%2Dbody%20span%2Ealign%2Dright%7Bdisplay%3Ablock%3Boverflow%3Ahidden%3Bclear%3Aboth%7D%2Emarkdown%2Dbody%20span%2Ealign%2Dright%3Espan%7Bdisplay%3Ablock%3Bmargin%3A13px%200%200%3Boverflow%3Ahidden%3Btext%2Dalign%3Aright%7D%2Emarkdown%2Dbody%20span%2Ealign%2Dright%20span%20img%7Bmargin%3A0%3Btext%2Dalign%3Aright%7D%2Emarkdown%2Dbody%20span%2Efloat%2Dleft%7Bdisplay%3Ablock%3Bfloat%3Aleft%3Bmargin%2Dright%3A13px%3Boverflow%3Ahidden%7D%2Emarkdown%2Dbody%20span%2Efloat%2Dleft%20span%7Bmargin%3A13px%200%200%7D%2Emarkdown%2Dbody%20span%2Efloat%2Dright%7Bdisplay%3Ablock%3Bfloat%3Aright%3Bmargin%2Dleft%3A13px%3Boverflow%3Ahidden%7D%2Emarkdown%2Dbody%20span%2Efloat%2Dright%3Espan%7Bdisplay%3Ablock%3Bmargin%3A13px%20auto%200%3Boverflow%3Ahidden%3Btext%2Dalign%3Aright%7D%2Emarkdown%2Dbody%20code%2C%2Emarkdown%2Dbody%20tt%7Bpadding%3A%2E2em%20%2E4em%3Bmargin%3A0%3Bfont%2Dsize%3A85%25%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dneutral%2Dmuted%29%3Bborder%2Dradius%3A6px%7D%2Emarkdown%2Dbody%20code%20br%2C%2Emarkdown%2Dbody%20tt%20br%7Bdisplay%3Anone%7D%2Emarkdown%2Dbody%20del%20code%7Btext%2Ddecoration%3Ainherit%7D%2Emarkdown%2Dbody%20pre%20code%7Bfont%2Dsize%3A100%25%7D%2Emarkdown%2Dbody%20pre%3Ecode%7Bpadding%3A0%3Bmargin%3A0%3Bword%2Dbreak%3Anormal%3Bwhite%2Dspace%3Apre%3Bbackground%3A0%200%3Bborder%3A0%7D%2Emarkdown%2Dbody%20%2Ehighlight%7Bmargin%2Dbottom%3A16px%7D%2Emarkdown%2Dbody%20%2Ehighlight%20pre%7Bmargin%2Dbottom%3A0%3Bword%2Dbreak%3Anormal%7D%2Emarkdown%2Dbody%20%2Ehighlight%20pre%2C%2Emarkdown%2Dbody%20pre%7Bpadding%3A16px%3Boverflow%3Aauto%3Bfont%2Dsize%3A85%25%3Bline%2Dheight%3A1%2E45%3Bbackground%2Dcolor%3Avar%28%2D%2Dcolor%2Dcanvas%2Dsubtle%29%3Bborder%2Dradius%3A6px%7D%2Emarkdown%2Dbody%20pre%20code%2C%2Emarkdown%2Dbody%20pre%20tt%7Bdisplay%3Ainline%3Bmax%2Dwidth%3Aauto%3Bpadding%3A0%3Bmargin%3A0%3Boverflow%3Avisible%3Bline%2Dheight%3Ainherit%3Bword%2Dwrap%3Anormal%3Bbackground%2Dcolor%3Atransparent%3Bborder%3A0%7D%2Emarkdown%2Dbody%20%2Ecsv%2Ddata%20td%2C%2Emarkdown%2Dbody%20%2Ecsv%2Ddata%20th%7Bpadding%3A5px%3Boverflow%3Ahidden%3Bfont%2Dsize%3A12px%3Bline%2Dheight%3A1%3Btext%2Dalign%3Aleft%3Bwhite%2Dspace%3Anowrap%7D%2Emarkdown%2Dbody%20%2Ecsv%2Ddata%20%2Eblob%2Dnum%7Bpadding%3A10px%208px%209px%3Btext%2Dalign%3Aright%3Bbackground%3Avar%28%2D%2Dcolor%2Dcanvas%2Ddefault%29%3Bborder%3A0%7D%2Emarkdown%2Dbody%20%2Ecsv%2Ddata%20tr%7Bborder%2Dtop%3A0%7D%2Emarkdown%2Dbody%20%2Ecsv%2Ddata%20th%7Bfont%2Dweight%3A600%3Bbackground%3Avar%28%2D%2Dcolor%2Dcanvas%2Dsubtle%29%3Bborder%2Dtop%3A0%7D%2Emarkdown%2Dbody%20%2Efootnotes%7Bfont%2Dsize%3A12px%3Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Dmuted%29%3Bborder%2Dtop%3A1px%20solid%20var%28%2D%2Dcolor%2Dborder%2Ddefault%29%7D%2Emarkdown%2Dbody%20%2Efootnotes%20ol%7Bpadding%2Dleft%3A16px%7D%2Emarkdown%2Dbody%20%2Efootnotes%20li%7Bposition%3Arelative%7D%2Emarkdown%2Dbody%20%2Efootnotes%20li%3Atarget%3A%3Abefore%7Bposition%3Aabsolute%3Btop%3A%2D8px%3Bright%3A%2D8px%3Bbottom%3A%2D8px%3Bleft%3A%2D24px%3Bpointer%2Devents%3Anone%3Bcontent%3A%22%22%3Bborder%3A2px%20solid%20var%28%2D%2Dcolor%2Daccent%2Demphasis%29%3Bborder%2Dradius%3A6px%7D%2Emarkdown%2Dbody%20%2Efootnotes%20li%3Atarget%7Bcolor%3Avar%28%2D%2Dcolor%2Dfg%2Ddefault%29%7D%2Emarkdown%2Dbody%20%2Efootnotes%20%2Edata%2Dfootnote%2Dbackref%20g%2Demoji%7Bfont%2Dfamily%3Amonospace%7D%2Emarkdown%2Dbody%20%2Etask%2Dlist%2Ditem%7Blist%2Dstyle%2Dtype%3Anone%7D%2Emarkdown%2Dbody%20%2Etask%2Dlist%2Ditem%20label%7Bfont%2Dweight%3A400%7D%2Emarkdown%2Dbody%20%2Etask%2Dlist%2Ditem%2Eenabled%20label%7Bcursor%3Apointer%7D%2Emarkdown%2Dbody%20%2Etask%2Dlist%2Ditem%2B%2Etask%2Dlist%2Ditem%7Bmargin%2Dtop%3A3px%7D%2Emarkdown%2Dbody%20%2Etask%2Dlist%2Ditem%20%2Ehandle%7Bdisplay%3Anone%7D%2Emarkdown%2Dbody%20%2Etask%2Dlist%2Ditem%2Dcheckbox%7Bmargin%3A0%20%2E2em%20%2E25em%20%2D1%2E6em%3Bvertical%2Dalign%3Amiddle%7D%2Emarkdown%2Dbody%20%2Econtains%2Dtask%2Dlist%3Adir%28rtl%29%20%2Etask%2Dlist%2Ditem%2Dcheckbox%7Bmargin%3A0%20%2D1%2E6em%20%2E25em%20%2E2em%7D%2Emarkdown%2Dbody%20%3A%3A%2Dwebkit%2Dcalendar%2Dpicker%2Dindicator%7Bfilter%3Ainvert%2850%25%29%7D" rel="stylesheet" />
+</head>
+<body>
+<h1 id="bristol-32-boat-monitoring-system">Bristol 32 Boat Monitoring
+System</h1>
+<h2 id="distributed-human-detection-and-environmental-monitoring">Distributed
+Human Detection and Environmental Monitoring</h2>
+<p><strong>Version 1.0.0</strong><br />
+<strong>Date: November 16, 2025</strong><br />
+<strong>Target Vessel: Bristol 32 “Liberty”</strong></p>
+<hr />
+<h2 id="executive-summary">Executive Summary</h2>
+<p>The Bristol 32 Boat Monitoring System is a comprehensive, distributed
+IoT solution designed specifically for liveaboard sailing vessels. This
+system provides real-time human presence detection, environmental
+monitoring, and security alerting across multiple zones of a sailboat
+using low-power LoRa wireless communication.</p>
+<p>The system consists of 3-5 sensor nodes distributed around the vessel
+(companionway, foredeck, cockpit, cabin, and engine compartment) that
+communicate with a central hub at the navigation station. Each node
+monitors environmental conditions and human activity, providing both
+security and safety functions for liveaboard cruisers.</p>
+<p><strong>Key Features:</strong> - Distributed mmWave human presence
+detection - Environmental monitoring (temperature, humidity, barometric
+pressure) - Multiple alarm modes with marine-appropriate responses -
+LoRa wireless communication optimized for marine environments -
+Real-time displays and data logging - Marine-hardened design for
+saltwater conditions</p>
+<p><strong>System Cost:</strong> $180-250 for complete 3-node + hub
+installation<br />
+<strong>Power Consumption:</strong> 200-500mA peak per node<br />
+<strong>Communication Range:</strong> 500-2000 meters line-of-sight</p>
+<hr />
+<h2 id="system-architecture">1. System Architecture</h2>
+<h3 id="network-topology">1.1 Network Topology</h3>
+<pre><code>┌─────────────────┐    LoRa 915MHz    ┌─────────────────┐
+│   Companionway  │◄─────────────────►│   Navigation    │
+│   Sensor Node   │                   │   Hub Station   │
+│   (Node 0x01)   │                   │                 │
+└─────────────────┘                   │ • Central Hub   │
+                                      │ • Data Logging  │
+┌─────────────────┐                   │ • Alarm Control │
+│   Foredeck      │◄─────────────────►│ • Touch Display │
+│   Sensor Node   │                   │ • SD Card       │
+│   (Node 0x02)   │                   └─────────────────┘
+└─────────────────┘
+                                      ┌─────────────────┐
+┌─────────────────┐                   │   Cockpit       │
+│   Engine Room   │◄─────────────────►│   Sensor Node   │
+│   Sensor Node   │                   │   (Node 0x04)   │
+│   (Node 0x03)   │                   └─────────────────┘
+└─────────────────┘</code></pre>
+<h3 id="hardware-architecture">1.2 Hardware Architecture</h3>
+<h4 id="sensor-node-components">Sensor Node Components:</h4>
+<ul>
+<li><strong>Microcontroller:</strong> ESP32-S3 or ESP32-WROOM-32</li>
+<li><strong>Communication:</strong> RFM95W LoRa transceiver
+(915/868/433MHz)</li>
+<li><strong>Environmental:</strong> BME280 temperature/humidity/pressure
+sensor</li>
+<li><strong>Human Detection:</strong> HLK-LD2410 24GHz mmWave radar
+sensor</li>
+<li><strong>Display:</strong> 2.4” ILI9341 TFT LCD (320x240
+resolution)</li>
+<li><strong>Audio:</strong> 5V piezo buzzer for local alerts</li>
+<li><strong>Controls:</strong> 3 tactile push buttons</li>
+<li><strong>Power:</strong> 12V marine power with buck converter + LDO
+regulation</li>
+</ul>
+<h4 id="hub-components">Hub Components:</h4>
+<ul>
+<li><strong>Microcontroller:</strong> ESP32-S3 development board</li>
+<li><strong>Communication:</strong> RFM95W LoRa transceiver</li>
+<li><strong>Display:</strong> 3.5” ILI9488 TFT touchscreen
+(480x320)</li>
+<li><strong>Storage:</strong> microSD card module for data logging</li>
+<li><strong>Timekeeping:</strong> DS3231 RTC with battery backup</li>
+<li><strong>Audio:</strong> 8Ω speaker for alarm notifications</li>
+<li><strong>Power:</strong> 12V marine power with battery backup</li>
+</ul>
+<h3 id="software-architecture">1.3 Software Architecture</h3>
+<h4 id="firmware-structure">Firmware Structure:</h4>
+<pre><code>boat_monitoring_system/
+├── common/                    # Shared code and protocols
+│   ├── CommonTypes.h         # Data structures and enums
+│   └── MessageProtocol.h     # LoRa packet formats
+├── node_firmware/            # Individual sensor node code
+│   ├── node_firmware.ino     # Main Arduino sketch
+│   ├── config/               # Node configuration
+│   ├── sensors/              # Sensor drivers
+│   ├── lora/                 # LoRa communication
+│   └── display/              # Local display management
+└── hub_firmware/             # Central hub code
+    ├── hub_firmware.ino      # Main Arduino sketch
+    ├── lora/                 # LoRa hub receiver
+    ├── display/              # Hub display management
+    ├── storage/              # SD card data logging
+    └── alarm/                # Alarm state management</code></pre>
+<h4 id="communication-protocol">Communication Protocol:</h4>
+<ul>
+<li><strong>Packet Types:</strong> Environmental, Detection, Alarm,
+Heartbeat, Config</li>
+<li><strong>Error Correction:</strong> XOR checksum validation</li>
+<li><strong>Addressing:</strong> 8-bit node IDs with broadcast
+capability</li>
+<li><strong>Data Encoding:</strong> Efficient binary format for sensor
+data</li>
+</ul>
+<hr />
+<h2 id="core-functionality">2. Core Functionality</h2>
+<h3 id="human-presence-detection">2.1 Human Presence Detection</h3>
+<h4 id="mmwave-radar-technology">mmWave Radar Technology:</h4>
+<ul>
+<li><strong>Frequency:</strong> 24GHz FMCW radar</li>
+<li><strong>Range:</strong> 0.75-6 meters detection distance</li>
+<li><strong>Resolution:</strong> 0.75m distance resolution</li>
+<li><strong>Zones:</strong> Near (0-2m), Middle (2-4m), Far (4-6m)</li>
+<li><strong>Sensitivity:</strong> Configurable detection thresholds</li>
+</ul>
+<h4 id="detection-events">Detection Events:</h4>
+<ul>
+<li><strong>Approach:</strong> Person moving toward sensor</li>
+<li><strong>Entry:</strong> Person entering detection zone</li>
+<li><strong>Presence:</strong> Stationary person detected</li>
+<li><strong>Exit:</strong> Person leaving detection zone</li>
+</ul>
+<h4 id="false-positive-mitigation">False Positive Mitigation:</h4>
+<ul>
+<li>Confidence scoring (0-100%)</li>
+<li>Minimum duration filtering</li>
+<li>Zone-based validation</li>
+<li>Movement pattern analysis</li>
+</ul>
+<h3 id="environmental-monitoring">2.2 Environmental Monitoring</h3>
+<h4 id="sensor-specifications">Sensor Specifications:</h4>
+<ul>
+<li><strong>Temperature:</strong> -40°C to +85°C, ±1°C accuracy</li>
+<li><strong>Humidity:</strong> 0-100% RH, ±3% accuracy</li>
+<li><strong>Pressure:</strong> 300-1100 hPa, ±1 hPa accuracy</li>
+<li><strong>Battery Voltage:</strong> 0-15V range, 10-bit ADC
+resolution</li>
+</ul>
+<h4 id="weather-analysis">Weather Analysis:</h4>
+<ul>
+<li><strong>Storm Detection:</strong> Pressure drop rate monitoring</li>
+<li><strong>Trend Analysis:</strong> 24-hour environmental trends</li>
+<li><strong>Dew Point Calculation:</strong> Condensation risk
+assessment</li>
+<li><strong>Heat Index:</strong> Apparent temperature calculation</li>
+</ul>
+<h3 id="alarm-system">2.3 Alarm System</h3>
+<h4 id="alarm-modes">Alarm Modes:</h4>
+<ul>
+<li><strong>Disarmed:</strong> Detection logged, no alerts</li>
+<li><strong>Doorbell:</strong> Gentle chime for companionway
+detection</li>
+<li><strong>Perimeter Armed:</strong> Exterior nodes trigger full
+alarm</li>
+<li><strong>Full Armed:</strong> All nodes trigger alarm</li>
+<li><strong>Quiet Hours:</strong> Reduced sensitivity, silent
+notifications</li>
+</ul>
+<h4 id="alarm-responses">Alarm Responses:</h4>
+<ul>
+<li><strong>Local:</strong> Piezo buzzer with escalating tones</li>
+<li><strong>Hub:</strong> Speaker with voice announcements</li>
+<li><strong>Visual:</strong> Display flashing and status indicators</li>
+<li><strong>Logging:</strong> Timestamped event recording</li>
+</ul>
+<h3 id="data-management">2.4 Data Management</h3>
+<h4 id="logging-format">Logging Format:</h4>
+<pre class="csv"><code>timestamp,node_id,event_type,value1,value2,value3,battery_mv,rssi
+2025-11-16 14:30:15,0x01,ENV_DATA,23.5,65.2,1013.2,12450,-85
+2025-11-16 14:30:20,0x02,DETECTION,1,85,240,12380,-78</code></pre>
+<h4 id="data-retention">Data Retention:</h4>
+<ul>
+<li><strong>Environmental:</strong> 24-hour rolling buffer</li>
+<li><strong>Events:</strong> 7-day event log</li>
+<li><strong>System:</strong> 30-day system health log</li>
+<li><strong>Storage:</strong> microSD card with FAT32 formatting</li>
+</ul>
+<hr />
+<h2 id="alarm-modes-and-operation">3. Alarm Modes and Operation</h2>
+<h3 id="mode-descriptions">3.1 Mode Descriptions</h3>
+<h4 id="disarmed-mode">Disarmed Mode</h4>
+<ul>
+<li><strong>Purpose:</strong> Normal operation without security
+alerts</li>
+<li><strong>Detection:</strong> All events logged but no audible
+alerts</li>
+<li><strong>Display:</strong> Green status indicator</li>
+<li><strong>Use Case:</strong> Daytime operation, maintenance
+periods</li>
+</ul>
+<h4 id="doorbell-mode">Doorbell Mode</h4>
+<ul>
+<li><strong>Purpose:</strong> Courtesy alerts for companionway
+access</li>
+<li><strong>Detection:</strong> Companionway node triggers gentle
+chime</li>
+<li><strong>Response:</strong> Single tone, no full alarm</li>
+<li><strong>Use Case:</strong> Evening hours when expecting
+visitors</li>
+</ul>
+<h4 id="perimeter-armed">Perimeter Armed</h4>
+<ul>
+<li><strong>Purpose:</strong> Exterior security monitoring</li>
+<li><strong>Detection:</strong> Foredeck and cockpit nodes trigger
+alarm</li>
+<li><strong>Response:</strong> Full alarm sequence</li>
+<li><strong>Use Case:</strong> Overnight with access to cockpit</li>
+</ul>
+<h4 id="full-armed">Full Armed</h4>
+<ul>
+<li><strong>Purpose:</strong> Complete vessel security</li>
+<li><strong>Detection:</strong> All nodes trigger alarm</li>
+<li><strong>Response:</strong> Maximum alert level</li>
+<li><strong>Use Case:</strong> Extended absences, high-security
+periods</li>
+</ul>
+<h4 id="quiet-hours">Quiet Hours</h4>
+<ul>
+<li><strong>Purpose:</strong> Reduced sensitivity for nighttime</li>
+<li><strong>Detection:</strong> Higher confidence thresholds</li>
+<li><strong>Response:</strong> Silent notifications only</li>
+<li><strong>Use Case:</strong> Sleeping hours, noise-sensitive
+areas</li>
+</ul>
+<h3 id="control-interface">3.2 Control Interface</h3>
+<h4 id="node-controls">Node Controls:</h4>
+<ul>
+<li><strong>MODE Button:</strong> Cycle through alarm modes</li>
+<li><strong>DISPLAY Button:</strong> Change display views</li>
+<li><strong>SILENCE Button:</strong> Acknowledge/cancel alarms</li>
+</ul>
+<h4 id="hub-controls">Hub Controls:</h4>
+<ul>
+<li><strong>ARM Button:</strong> Arm system (Perimeter → Full
+cycle)</li>
+<li><strong>DISARM Button:</strong> Disarm all nodes</li>
+<li><strong>SILENCE Button:</strong> Cancel active alarms</li>
+</ul>
+<h4 id="touchscreen-interface">Touchscreen Interface:</h4>
+<ul>
+<li><strong>Status Overview:</strong> All nodes’ current state</li>
+<li><strong>Environmental Data:</strong> Real-time readings</li>
+<li><strong>Event Log:</strong> Recent detections and alarms</li>
+<li><strong>Configuration:</strong> System settings and node
+management</li>
+</ul>
+<hr />
+<h2 id="hardware-implementation">4. Hardware Implementation</h2>
+<h3 id="node-electronics">4.1 Node Electronics</h3>
+<h4 id="esp32-s3-integration">ESP32-S3 Integration:</h4>
+<ul>
+<li><strong>Core:</strong> Dual-core Xtensa LX7 @ 240MHz</li>
+<li><strong>Memory:</strong> 512KB SRAM, 8MB PSRAM (optional)</li>
+<li><strong>Wireless:</strong> 2.4GHz WiFi, Bluetooth 5.0</li>
+<li><strong>GPIO:</strong> 45 programmable pins</li>
+<li><strong>ADC:</strong> 20 channels, 12-bit resolution</li>
+<li><strong>Power:</strong> 3.0-3.6V operation, deep sleep modes</li>
+</ul>
+<h4 id="lora-module-rfm95w">LoRa Module (RFM95W):</h4>
+<ul>
+<li><strong>Frequency Range:</strong> 410-525MHz or 862-1020MHz</li>
+<li><strong>Modulation:</strong> FSK, GFSK, MSK, GMSK, LoRa, OOK</li>
+<li><strong>Data Rate:</strong> 0.018-300kbps</li>
+<li><strong>Sensitivity:</strong> -148dBm</li>
+<li><strong>Output Power:</strong> +20dBm max</li>
+<li><strong>Range:</strong> 20km line-of-sight (ideal conditions)</li>
+</ul>
+<h4 id="mmwave-sensor-hlk-ld2410">mmWave Sensor (HLK-LD2410):</h4>
+<ul>
+<li><strong>Detection Technology:</strong> FMCW radar</li>
+<li><strong>Operating Frequency:</strong> 24GHz</li>
+<li><strong>Detection Distance:</strong> 0.75-6 meters</li>
+<li><strong>Distance Resolution:</strong> 0.75 meters</li>
+<li><strong>Output:</strong> UART serial data</li>
+<li><strong>Power Consumption:</strong> &lt;1W</li>
+</ul>
+<h3 id="power-system">4.2 Power System</h3>
+<h4 id="input-power">Input Power:</h4>
+<ul>
+<li><strong>Voltage:</strong> 12V marine electrical system</li>
+<li><strong>Current:</strong> 200-500mA per node (peak)</li>
+<li><strong>Protection:</strong> Inline fuse, reverse polarity
+diode</li>
+<li><strong>Filtering:</strong> TVS diode for transients</li>
+</ul>
+<h4 id="regulation">Regulation:</h4>
+<ul>
+<li><strong>Step-down:</strong> LM2596 buck converter (12V → 5V)</li>
+<li><strong>LDO:</strong> AMS1117-3.3 (5V → 3.3V)</li>
+<li><strong>Capacitance:</strong> Multiple bypass capacitors</li>
+<li><strong>Monitoring:</strong> Battery voltage ADC measurement</li>
+</ul>
+<h4 id="battery-backup-optional">Battery Backup (Optional):</h4>
+<ul>
+<li><strong>Chemistry:</strong> Li-ion 18650 cells (3.7V)</li>
+<li><strong>Capacity:</strong> 3000mAh per cell</li>
+<li><strong>Configuration:</strong> 2-cell series (7.4V)</li>
+<li><strong>Charging:</strong> TP4056 module with solar input</li>
+<li><strong>Runtime:</strong> 24-48 hours backup power</li>
+</ul>
+<h3 id="enclosure-design">4.3 Enclosure Design</h3>
+<h4 id="environmental-protection">Environmental Protection:</h4>
+<ul>
+<li><strong>Rating:</strong> IP65 (dust-tight, water jets)</li>
+<li><strong>Material:</strong> ABS plastic with UV stabilization</li>
+<li><strong>Sealing:</strong> Silicone gaskets, cable glands</li>
+<li><strong>Mounting:</strong> Stainless steel hardware</li>
+</ul>
+<h4 id="thermal-management">Thermal Management:</h4>
+<ul>
+<li><strong>Passive Cooling:</strong> Heat sinks on regulators</li>
+<li><strong>Ventilation:</strong> Filtered vents for pressure
+equalization</li>
+<li><strong>Operating Range:</strong> -10°C to +50°C</li>
+<li><strong>Storage Range:</strong> -20°C to +70°C</li>
+</ul>
+<hr />
+<h2 id="software-implementation">5. Software Implementation</h2>
+<h3 id="firmware-architecture">5.1 Firmware Architecture</h3>
+<h4 id="state-machine-design">State Machine Design:</h4>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> SystemState <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    STATE_INIT<span class="op">,</span>           <span class="co">// Boot and initialization</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    STATE_NORMAL<span class="op">,</span>         <span class="co">// Standard operation</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    STATE_PRE_ALARM<span class="op">,</span>      <span class="co">// Detection confirmed, grace period</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    STATE_ALARM_TRIGGERED<span class="op">,</span><span class="co">// Alarm active</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    STATE_SLEEP<span class="op">,</span>          <span class="co">// Power saving mode</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    STATE_ERROR           <span class="co">// Fault condition</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<h4 id="task-scheduling">Task Scheduling:</h4>
+<ul>
+<li><strong>Sensor Reading:</strong> 60-second intervals</li>
+<li><strong>Display Update:</strong> 1-second intervals</li>
+<li><strong>Button Polling:</strong> 100ms intervals</li>
+<li><strong>LoRa Transmission:</strong> Event-driven or 5-minute
+intervals</li>
+<li><strong>Heartbeat:</strong> 2-minute intervals</li>
+</ul>
+<h3 id="communication-protocol-1">5.2 Communication Protocol</h3>
+<h4 id="packet-structure">Packet Structure:</h4>
+<pre><code>Byte 0:    Node ID (0x01-0xFE)
+Byte 1:    Message Type (0x01-0xFF)
+Bytes 2-N: Data payload
+Byte N+1:  Checksum</code></pre>
+<h4 id="message-types">Message Types:</h4>
+<ul>
+<li><strong>0x01:</strong> Environmental data (temperature, humidity,
+pressure)</li>
+<li><strong>0x02:</strong> Detection event (confidence, distance,
+zone)</li>
+<li><strong>0x03:</strong> Alarm command (arm, disarm, mode change)</li>
+<li><strong>0x04:</strong> Heartbeat (battery voltage)</li>
+<li><strong>0x20:</strong> Configuration update</li>
+<li><strong>0x21:</strong> Time synchronization</li>
+</ul>
+<h3 id="configuration-management">5.3 Configuration Management</h3>
+<h4 id="node-configuration">Node Configuration:</h4>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> NodeConfig <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint8_t</span> nodeID<span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    String nodeName<span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    AlarmMode alarmMode<span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> nearZoneMax<span class="op">;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> middleZoneMax<span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint8_t</span> minConfidence<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint16_t</span> minDuration<span class="op">;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> envDataInterval<span class="op">;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> heartbeatInterval<span class="op">;</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> loraFrequency<span class="op">;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<h4 id="storage-method">Storage Method:</h4>
+<ul>
+<li><strong>ESP32 NVS:</strong> Non-volatile storage for
+configuration</li>
+<li><strong>Default Values:</strong> Sensible defaults for initial
+operation</li>
+<li><strong>Runtime Updates:</strong> Serial interface for configuration
+changes</li>
+</ul>
+<hr />
+<h2 id="installation-and-deployment">6. Installation and Deployment</h2>
+<h3 id="node-placement-strategy">6.1 Node Placement Strategy</h3>
+<h4 id="companionway-node">Companionway Node:</h4>
+<ul>
+<li><strong>Location:</strong> Main entrance area</li>
+<li><strong>Purpose:</strong> Entry/exit monitoring, doorbell
+function</li>
+<li><strong>Orientation:</strong> Facing entrance, 2-3m coverage</li>
+<li><strong>Power:</strong> 12V cabin lighting circuit</li>
+</ul>
+<h4 id="foredeck-node">Foredeck Node:</h4>
+<ul>
+<li><strong>Location:</strong> Forward deck area</li>
+<li><strong>Purpose:</strong> Security monitoring, boarding
+detection</li>
+<li><strong>Orientation:</strong> Covering access routes</li>
+<li><strong>Power:</strong> Navigation lights circuit</li>
+</ul>
+<h4 id="cockpit-node">Cockpit Node:</h4>
+<ul>
+<li><strong>Location:</strong> Helm station area</li>
+<li><strong>Purpose:</strong> Cockpit security, weather monitoring</li>
+<li><strong>Orientation:</strong> Aft-facing for boarding detection</li>
+<li><strong>Power:</strong> Accessory power outlet</li>
+</ul>
+<h4 id="engine-room-node">Engine Room Node:</h4>
+<ul>
+<li><strong>Location:</strong> Engine compartment</li>
+<li><strong>Purpose:</strong> Equipment monitoring, unauthorized
+access</li>
+<li><strong>Orientation:</strong> Interior monitoring</li>
+<li><strong>Power:</strong> Engine room lighting circuit</li>
+</ul>
+<h3 id="wiring-and-connections">6.2 Wiring and Connections</h3>
+<h4 id="power-distribution">Power Distribution:</h4>
+<ul>
+<li><strong>Main Feed:</strong> 12V from distribution panel</li>
+<li><strong>Protection:</strong> 1A fuse per node</li>
+<li><strong>Grounding:</strong> Common ground to vessel ground</li>
+<li><strong>Cable:</strong> Marine-grade 18AWG tinned copper</li>
+</ul>
+<h4 id="signal-connections">Signal Connections:</h4>
+<ul>
+<li><strong>LoRa Antennas:</strong> 915MHz quarter-wave vertical</li>
+<li><strong>Sensor Cables:</strong> Shielded for EMI protection</li>
+<li><strong>Display Cables:</strong> Ribbon cable for TFT displays</li>
+<li><strong>Button Wiring:</strong> Individual conductors with
+pull-ups</li>
+</ul>
+<h3 id="commissioning-procedure">6.3 Commissioning Procedure</h3>
+<h4 id="node-setup">Node Setup:</h4>
+<ol type="1">
+<li><strong>Hardware Assembly:</strong> Mount components in
+enclosure</li>
+<li><strong>Power Connection:</strong> Verify voltage and polarity</li>
+<li><strong>Antenna Installation:</strong> Secure external antenna</li>
+<li><strong>Firmware Upload:</strong> Program ESP32 with node
+firmware</li>
+<li><strong>Configuration:</strong> Set node ID and parameters</li>
+</ol>
+<h4 id="system-integration">System Integration:</h4>
+<ol type="1">
+<li><strong>Hub Installation:</strong> Mount at navigation station</li>
+<li><strong>Node Registration:</strong> Add nodes to hub
+configuration</li>
+<li><strong>Range Testing:</strong> Verify LoRa communication</li>
+<li><strong>Calibration:</strong> Adjust sensor parameters</li>
+<li><strong>Final Testing:</strong> Complete system validation</li>
+</ol>
+<hr />
+<h2 id="testing-and-validation">7. Testing and Validation</h2>
+<h3 id="unit-testing">7.1 Unit Testing</h3>
+<h4 id="sensor-validation">Sensor Validation:</h4>
+<ul>
+<li><strong>BME280:</strong> Accuracy testing across temperature
+range</li>
+<li><strong>mmWave:</strong> Detection range and false positive
+testing</li>
+<li><strong>Display:</strong> Visual output verification</li>
+<li><strong>Buttons:</strong> Mechanical and electrical testing</li>
+</ul>
+<h4 id="communication-testing">Communication Testing:</h4>
+<ul>
+<li><strong>LoRa Range:</strong> Point-to-point distance testing</li>
+<li><strong>Packet Integrity:</strong> Error rate measurement</li>
+<li><strong>Throughput:</strong> Data transmission rate validation</li>
+<li><strong>Interference:</strong> Coexistence with VHF/AIS testing</li>
+</ul>
+<h3 id="integration-testing">7.2 Integration Testing</h3>
+<h4 id="system-functionality">System Functionality:</h4>
+<ul>
+<li><strong>Alarm Modes:</strong> All mode transitions tested</li>
+<li><strong>Multi-node Operation:</strong> Simultaneous node
+communication</li>
+<li><strong>Data Logging:</strong> SD card write/read verification</li>
+<li><strong>Power Management:</strong> Battery backup testing</li>
+</ul>
+<h4 id="environmental-testing">Environmental Testing:</h4>
+<ul>
+<li><strong>Temperature:</strong> -10°C to +50°C operation</li>
+<li><strong>Humidity:</strong> 90% RH marine conditions</li>
+<li><strong>Vibration:</strong> Engine and wave motion simulation</li>
+<li><strong>EMC:</strong> Electromagnetic compatibility testing</li>
+</ul>
+<h3 id="performance-metrics">7.3 Performance Metrics</h3>
+<h4 id="detection-accuracy">Detection Accuracy:</h4>
+<ul>
+<li><strong>True Positives:</strong> &gt;95% detection rate</li>
+<li><strong>False Positives:</strong> &lt;5% false alarm rate</li>
+<li><strong>Response Time:</strong> &lt;2 seconds from detection to
+alert</li>
+<li><strong>Zone Accuracy:</strong> ±0.5m distance resolution</li>
+</ul>
+<h4 id="system-reliability">System Reliability:</h4>
+<ul>
+<li><strong>Uptime:</strong> &gt;99.5% operational availability</li>
+<li><strong>Data Integrity:</strong> 100% packet delivery (with
+retries)</li>
+<li><strong>Power Efficiency:</strong> &lt;50mA average current
+draw</li>
+<li><strong>Memory Usage:</strong> &lt;70% ESP32 RAM utilization</li>
+</ul>
+<hr />
+<h2 id="maintenance-and-troubleshooting">8. Maintenance and
+Troubleshooting</h2>
+<h3 id="routine-maintenance">8.1 Routine Maintenance</h3>
+<h4 id="monthly-tasks">Monthly Tasks:</h4>
+<ul>
+<li><strong>Visual Inspection:</strong> Check enclosures for damage</li>
+<li><strong>Antenna Verification:</strong> Ensure antennas are
+secure</li>
+<li><strong>Display Cleaning:</strong> Clean TFT screens</li>
+<li><strong>Cable Inspection:</strong> Check for corrosion or
+damage</li>
+</ul>
+<h4 id="quarterly-tasks">Quarterly Tasks:</h4>
+<ul>
+<li><strong>Firmware Updates:</strong> Check for software updates</li>
+<li><strong>Sensor Calibration:</strong> Recalibrate environmental
+sensors</li>
+<li><strong>Battery Testing:</strong> Test backup battery capacity</li>
+<li><strong>Data Review:</strong> Analyze logged data for anomalies</li>
+</ul>
+<h4 id="annual-tasks">Annual Tasks:</h4>
+<ul>
+<li><strong>Complete Checkout:</strong> Full system testing</li>
+<li><strong>Component Replacement:</strong> Replace worn components</li>
+<li><strong>Documentation Update:</strong> Update system records</li>
+</ul>
+<h3 id="common-issues">8.2 Common Issues</h3>
+<h4 id="communication-problems">Communication Problems:</h4>
+<ul>
+<li><strong>Symptom:</strong> Nodes show offline status</li>
+<li><strong>Cause:</strong> LoRa range, antenna damage,
+interference</li>
+<li><strong>Solution:</strong> Check antenna connections, relocate
+nodes, change frequency</li>
+</ul>
+<h4 id="false-alarms">False Alarms:</h4>
+<ul>
+<li><strong>Symptom:</strong> Unwanted alarm triggers</li>
+<li><strong>Cause:</strong> Sensitivity too high, environmental
+factors</li>
+<li><strong>Solution:</strong> Adjust detection parameters, add
+exclusion zones</li>
+</ul>
+<h4 id="power-issues">Power Issues:</h4>
+<ul>
+<li><strong>Symptom:</strong> Node resets or erratic behavior</li>
+<li><strong>Cause:</strong> Voltage drops, poor connections, regulator
+failure</li>
+<li><strong>Solution:</strong> Check power wiring, test voltage
+regulation</li>
+</ul>
+<h4 id="display-problems">Display Problems:</h4>
+<ul>
+<li><strong>Symptom:</strong> Blank or corrupted display</li>
+<li><strong>Cause:</strong> SPI connection issues, backlight
+failure</li>
+<li><strong>Solution:</strong> Verify SPI wiring, replace display
+module</li>
+</ul>
+<hr />
+<h2 id="cost-analysis">9. Cost Analysis</h2>
+<h3 id="bill-of-materials">9.1 Bill of Materials</h3>
+<h4 id="per-node-x3">Per Node (x3):</h4>
+<ul>
+<li>ESP32-S3 Development Board: $12</li>
+<li>RFM95W LoRa Module: $7</li>
+<li>BME280 Sensor: $8</li>
+<li>HLK-LD2410 mmWave Sensor: $12</li>
+<li>2.4” TFT Display: $15</li>
+<li>Enclosure &amp; Hardware: $25</li>
+<li>Miscellaneous (wires, fuses, etc.): $10 <strong>Subtotal per node:
+$89</strong></li>
+</ul>
+<h4 id="hub-x1">Hub (x1):</h4>
+<ul>
+<li>ESP32-S3 Development Board: $12</li>
+<li>RFM95W LoRa Module: $7</li>
+<li>3.5” Touchscreen Display: $28</li>
+<li>microSD Module: $3</li>
+<li>DS3231 RTC: $4</li>
+<li>Speaker &amp; Amplifier: $15</li>
+<li>Enclosure &amp; Hardware: $30</li>
+<li>Miscellaneous: $10 <strong>Subtotal hub: $109</strong></li>
+</ul>
+<h4 id="system-total-89-3-109-376">System Total: <strong>$89 × 3 + $109
+= $376</strong></h4>
+<h3 id="cost-optimization-options">9.2 Cost Optimization Options</h3>
+<h4 id="budget-configuration">Budget Configuration:</h4>
+<ul>
+<li>Omit displays on 2 nodes: -$30</li>
+<li>Use basic enclosures: -$20</li>
+<li>Skip battery backup: -$40</li>
+<li>Use ESP32-WROOM instead of S3: -$15 <strong>Optimized total:
+$271</strong></li>
+</ul>
+<h4 id="premium-configuration">Premium Configuration:</h4>
+<ul>
+<li>Add cellular backup: +$25</li>
+<li>Upgrade to IP67 enclosures: +$30</li>
+<li>Add solar charging: +$20</li>
+<li>Include professional installation: +$150 <strong>Premium total:
+$601</strong></li>
+</ul>
+<hr />
+<h2 id="safety-and-compliance">10. Safety and Compliance</h2>
+<h3 id="marine-electrical-standards">10.1 Marine Electrical
+Standards</h3>
+<h4 id="abyc-standards-compliance">ABYC Standards Compliance:</h4>
+<ul>
+<li><strong>E-11:</strong> AC and DC electrical systems on boats</li>
+<li><strong>E-30:</strong> Bonding of nonelectrical metallic parts</li>
+<li><strong>E-31:</strong> Grounding of electrical systems</li>
+</ul>
+<h4 id="safety-features">Safety Features:</h4>
+<ul>
+<li><strong>Overcurrent Protection:</strong> Fuses on all power
+feeds</li>
+<li><strong>Ground Fault Protection:</strong> Proper grounding
+practices</li>
+<li><strong>Isolation:</strong> Optically isolated inputs where
+required</li>
+<li><strong>Polarity Protection:</strong> Diodes preventing reverse
+connection</li>
+</ul>
+<h3 id="rf-compliance">10.2 RF Compliance</h3>
+<h4 id="fcc-regulations-us">FCC Regulations (US):</h4>
+<ul>
+<li><strong>Part 15.247:</strong> Spread spectrum transmission
+limits</li>
+<li><strong>Part 15.209:</strong> Radiated emission limits</li>
+<li><strong>Frequency Allocation:</strong> 902-928MHz ISM band</li>
+</ul>
+<h4 id="ce-compliance-europe">CE Compliance (Europe):</h4>
+<ul>
+<li><strong>ETSI EN 300 220:</strong> Short range devices</li>
+<li><strong>ETSI EN 301 489:</strong> EMC requirements</li>
+<li><strong>Frequency Allocation:</strong> 863-870MHz</li>
+</ul>
+<h3 id="environmental-compliance">10.3 Environmental Compliance</h3>
+<h4 id="marine-environment">Marine Environment:</h4>
+<ul>
+<li><strong>Saltwater Resistance:</strong> Corrosion-resistant
+materials</li>
+<li><strong>UV Protection:</strong> UV-stabilized enclosures</li>
+<li><strong>Vibration Resistance:</strong> Shock-mounted components</li>
+<li><strong>Temperature Range:</strong> -10°C to +50°C operation</li>
+</ul>
+<hr />
+<h2 id="future-enhancements">11. Future Enhancements</h2>
+<h3 id="software-features">11.1 Software Features</h3>
+<h4 id="advanced-analytics">Advanced Analytics:</h4>
+<ul>
+<li><strong>Predictive Maintenance:</strong> Equipment failure
+prediction</li>
+<li><strong>Weather Forecasting:</strong> Local weather prediction</li>
+<li><strong>Usage Patterns:</strong> Occupancy and activity
+analysis</li>
+<li><strong>Energy Optimization:</strong> Power consumption
+optimization</li>
+</ul>
+<h4 id="communication">Communication:</h4>
+<ul>
+<li><strong>WiFi Integration:</strong> Web interface for
+configuration</li>
+<li><strong>MQTT Support:</strong> Integration with marine IoT
+platforms</li>
+<li><strong>NMEA 0183/2000:</strong> Navigation system integration</li>
+<li><strong>Cellular Backup:</strong> SMS alerts for critical
+events</li>
+</ul>
+<h3 id="hardware-expansions">11.2 Hardware Expansions</h3>
+<h4 id="additional-sensors">Additional Sensors:</h4>
+<ul>
+<li><strong>Bilge Level:</strong> Water intrusion detection</li>
+<li><strong>Battery Monitoring:</strong> House bank voltage/current</li>
+<li><strong>GPS Anchor Watch:</strong> Position monitoring</li>
+<li><strong>Wind/Speed:</strong> Performance monitoring</li>
+</ul>
+<h4 id="network-expansion">Network Expansion:</h4>
+<ul>
+<li><strong>Mesh Networking:</strong> Multi-hop LoRa communication</li>
+<li><strong>Satellite Communication:</strong> Iridium/GPS backup</li>
+<li><strong>WiFi Mesh:</strong> Local network expansion</li>
+<li><strong>Bluetooth Integration:</strong> Mobile app connectivity</li>
+</ul>
+<h3 id="system-integration-1">11.3 System Integration</h3>
+<h4 id="navigation-systems">Navigation Systems:</h4>
+<ul>
+<li><strong>Chartplotter Integration:</strong> Overlay security
+data</li>
+<li><strong>AIS Integration:</strong> Vessel tracking correlation</li>
+<li><strong>Autopilot Interface:</strong> Security-aware navigation</li>
+<li><strong>VHF Radio Integration:</strong> Voice alerts</li>
+</ul>
+<h4 id="home-automation">Home Automation:</h4>
+<ul>
+<li><strong>Smart Lighting:</strong> Occupancy-based lighting
+control</li>
+<li><strong>Climate Control:</strong> Environmental optimization</li>
+<li><strong>Security Systems:</strong> Integrated alarm management</li>
+<li><strong>Energy Management:</strong> Load shedding and
+optimization</li>
+</ul>
+<hr />
+<h2 id="conclusion">12. Conclusion</h2>
+<p>The Bristol 32 Boat Monitoring System represents a comprehensive
+solution for liveaboard security and environmental monitoring. By
+combining distributed mmWave presence detection with robust LoRa
+communication and marine-hardened design, the system provides reliable
+protection and monitoring capabilities specifically tailored for sailing
+vessels.</p>
+<h3 id="key-achievements">Key Achievements:</h3>
+<ul>
+<li><strong>Distributed Architecture:</strong> Multiple sensor nodes
+provide comprehensive coverage</li>
+<li><strong>Marine Optimization:</strong> Designed for harsh saltwater
+environments</li>
+<li><strong>Low Power Design:</strong> Extended battery life for
+off-grid operation</li>
+<li><strong>Flexible Configuration:</strong> Multiple alarm modes for
+different situations</li>
+<li><strong>Data Logging:</strong> Comprehensive event and environmental
+data recording</li>
+<li><strong>Cost Effectiveness:</strong> Affordable implementation with
+professional features</li>
+</ul>
+<h3 id="system-readiness">System Readiness:</h3>
+<ul>
+<li><strong>Hardware:</strong> Complete BOM with marine-grade
+components</li>
+<li><strong>Software:</strong> Production-ready firmware with error
+handling</li>
+<li><strong>Documentation:</strong> Comprehensive setup and maintenance
+guides</li>
+<li><strong>Testing:</strong> Defined validation procedures and
+performance metrics</li>
+<li><strong>Safety:</strong> Compliance with marine electrical and RF
+standards</li>
+</ul>
+<h3 id="deployment-recommendations">Deployment Recommendations:</h3>
+<ol type="1">
+<li><strong>Start with Companionway Node:</strong> Essential security
+monitoring</li>
+<li><strong>Add Environmental Nodes:</strong> Weather and safety
+monitoring</li>
+<li><strong>Implement Hub:</strong> Centralized control and data
+management</li>
+<li><strong>Expand Coverage:</strong> Additional nodes as budget
+allows</li>
+<li><strong>Regular Maintenance:</strong> Quarterly system checkups</li>
+</ol>
+<p>This system transforms the Bristol 32 from a passive vessel into an
+intelligent, self-monitoring platform that enhances both security and
+livability for extended cruising.</p>
+<hr />
+<p><strong>Document Version:</strong> 1.0.0<br />
+<strong>Last Updated:</strong> November 16, 2025<br />
+<strong>Project Status:</strong> Ready for Implementation<br />
+<strong>Estimated Completion Time:</strong> 2-3 weeks for basic system,
+4-6 weeks for full installation</p>
+<p><strong>Fair winds and following seas! ⚓⛵</strong></content>
+<parameter name="filePath">/Users/herbertfields/Ai/opencode/bristol32/boat_monitoring_system_overview.md</p>
+</body>
+</html>

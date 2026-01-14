@@ -1,0 +1,219 @@
+(kicad_sch (version 20211123) (generator eeschema)
+
+  (uuid 5f3e6e3e-8f3e-4e3e-8f3e-4e3e8f3e4e3e)
+
+  (paper "A4")
+
+  (title_block
+    (title "Boat Monitor Node")
+    (date "2025-11-16")
+    (rev "1.0")
+    (company "Bristol 32 Liberty")
+    (comment 1 "Sensor node with ESP32-S3, LoRa, BME280, mmWave detector")
+  )
+
+  (lib_symbols
+    (symbol "ESP32-S3_1" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+      (property "Reference" "U" (id 0) (at 0 0 0)
+        (effects (font (size 1.27 1.27)))
+      )
+      (property "Value" "ESP32-S3" (id 1) (at 0 -2.54 0)
+        (effects (font (size 1.27 1.27)))
+      )
+    )
+    (symbol "RFM95W_1" (in_bom yes) (on_board yes)
+      (property "Reference" "U" (id 0) (at 0 0 0)
+        (effects (font (size 1.27 1.27)))
+      )
+      (property "Value" "RFM95W" (id 1) (at 0 -2.54 0)
+        (effects (font (size 1.27 1.27)))
+      )
+    )
+    (symbol "BME280_1" (in_bom yes) (on_board yes)
+      (property "Reference" "U" (id 0) (at 0 0 0)
+        (effects (font (size 1.27 1.27)))
+      )
+      (property "Value" "BME280" (id 1) (at 0 -2.54 0)
+        (effects (font (size 1.27 1.27)))
+      )
+    )
+  )
+
+  (junction (at 127 63.5) (diameter 0) (color 0 0 0 0)
+    (uuid 11111111-1111-1111-1111-111111111111)
+  )
+  (junction (at 127 76.2) (diameter 0) (color 0 0 0 0)
+    (uuid 22222222-2222-2222-2222-222222222222)
+  )
+
+  (wire (pts (xy 88.9 50.8) (xy 114.3 50.8))
+    (stroke (width 0) (type default) (color 0 0 0 0))
+    (uuid 33333333-3333-3333-3333-333333333333)
+  )
+  (wire (pts (xy 88.9 53.34) (xy 114.3 53.34))
+    (stroke (width 0) (type default) (color 0 0 0 0))
+    (uuid 44444444-4444-4444-4444-444444444444)
+  )
+
+  (text "POWER SUPPLY\n12V Boat -> LM2596 -> 5V -> AMS1117 -> 3.3V"
+    (at 25.4 165.1 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 55555555-5555-5555-5555-555555555555)
+  )
+
+  (text "ESP32-S3 DevKit\nMain Controller"
+    (at 38.1 38.1 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 66666666-6666-6666-6666-666666666666)
+  )
+
+  (text "RFM95W LoRa Module\n915 MHz (US) / 868 MHz (EU)"
+    (at 121.92 38.1 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 77777777-7777-7777-7777-777777777777)
+  )
+
+  (text "BME280 Sensor\nI2C: Temp/Humidity/Pressure"
+    (at 38.1 88.9 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 88888888-8888-8888-8888-888888888888)
+  )
+
+  (text "HLK-LD2410\nmmWave Human Detector"
+    (at 121.92 88.9 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 99999999-9999-9999-9999-999999999999)
+  )
+
+  (text "SPI Connections:\nGPIO10 -> CS\nGPIO11 -> MOSI\nGPIO12 -> SCK\nGPIO13 -> MISO\nGPIO9  -> DIO0"
+    (at 104.14 71.12 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa)
+  )
+
+  (text "I2C Connections:\nGPIO8 -> SDA\nGPIO7 -> SCL"
+    (at 20.32 121.92 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb)
+  )
+
+  (text "UART Connections:\nGPIO17 -> RX\nGPIO18 -> TX"
+    (at 104.14 121.92 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid cccccccc-cccc-cccc-cccc-cccccccccccc)
+  )
+
+  (text "Display (ILI9341):\nGPIO34 -> CS\nGPIO33 -> DC\nGPIO21 -> RST\nGPIO35 -> MOSI\nGPIO36 -> SCK"
+    (at 162.56 71.12 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid dddddddd-dddd-dddd-dddd-dddddddddddd)
+  )
+
+  (text "Buttons:\nGPIO3 -> BTN_MODE (to GND)\nGPIO4 -> BTN_DISPLAY (to GND)\nGPIO5 -> BTN_SILENCE (to GND)\nUse internal pullups"
+    (at 162.56 121.92 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee)
+  )
+
+  (text "Buzzer:\nGPIO15 -> NPN Transistor Base\nCollector -> Buzzer+\nEmitter -> GND\nBuzzer- -> 5V"
+    (at 20.32 154.94 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid ffffffff-ffff-ffff-ffff-ffffffffffff)
+  )
+
+  (label "ESP32_GPIO10_LORA_CS" (at 88.9 50.8 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 10101010-1010-1010-1010-101010101010)
+  )
+
+  (label "ESP32_GPIO11_SPI_MOSI" (at 88.9 53.34 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 20202020-2020-2020-2020-202020202020)
+  )
+
+  (label "ESP32_GPIO12_SPI_SCK" (at 88.9 55.88 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 30303030-3030-3030-3030-303030303030)
+  )
+
+  (label "ESP32_GPIO13_SPI_MISO" (at 88.9 58.42 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 40404040-4040-4040-4040-404040404040)
+  )
+
+  (label "ESP32_GPIO9_LORA_INT" (at 88.9 60.96 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 50505050-5050-5050-5050-505050505050)
+  )
+
+  (label "ESP32_GPIO8_I2C_SDA" (at 25.4 101.6 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 60606060-6060-6060-6060-606060606060)
+  )
+
+  (label "ESP32_GPIO7_I2C_SCL" (at 25.4 104.14 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 70707070-7070-7070-7070-707070707070)
+  )
+
+  (label "ESP32_GPIO17_UART_RX" (at 88.9 101.6 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 80808080-8080-8080-8080-808080808080)
+  )
+
+  (label "ESP32_GPIO18_UART_TX" (at 88.9 104.14 0)
+    (effects (font (size 1.016 1.016)) (justify left bottom))
+    (uuid 90909090-9090-9090-9090-909090909090)
+  )
+
+  (label "3V3" (at 127 63.5 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0)
+  )
+
+  (label "GND" (at 127 76.2 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid b0b0b0b0-b0b0-b0b0-b0b0-b0b0b0b0b0b0)
+  )
+
+  (label "5V" (at 127 88.9 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid c0c0c0c0-c0c0-c0c0-c0c0-c0c0c0c0c0c0)
+  )
+
+  (label "12V_IN" (at 25.4 177.8 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0)
+  )
+
+  (hierarchical_label "LORA_SPI" (shape input) (at 114.3 50.8 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid e0e0e0e0-e0e0-e0e0-e0e0-e0e0e0e0e0e0)
+  )
+
+  (hierarchical_label "I2C_BUS" (shape bidirectional) (at 50.8 101.6 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0)
+  )
+
+  (symbol (lib_id "ESP32-S3_1") (at 50.8 50.8 0) (unit 1)
+    (in_bom yes) (on_board yes)
+    (uuid 12345678-1234-1234-1234-123456789012)
+    (property "Reference" "U1" (id 0) (at 50.8 45.72 0))
+    (property "Value" "ESP32-S3-DevKitC-1" (id 1) (at 50.8 48.26 0))
+  )
+
+  (symbol (lib_id "RFM95W_1") (at 139.7 50.8 0) (unit 1)
+    (in_bom yes) (on_board yes)
+    (uuid 23456789-2345-2345-2345-234567890123)
+    (property "Reference" "U2" (id 0) (at 139.7 45.72 0))
+    (property "Value" "RFM95W-915MHz" (id 1) (at 139.7 48.26 0))
+  )
+
+  (symbol (lib_id "BME280_1") (at 50.8 101.6 0) (unit 1)
+    (in_bom yes) (on_board yes)
+    (uuid 34567890-3456-3456-3456-345678901234)
+    (property "Reference" "U3" (id 0) (at 50.8 96.52 0))
+    (property "Value" "BME280" (id 1) (at 50.8 99.06 0))
+  )
+)

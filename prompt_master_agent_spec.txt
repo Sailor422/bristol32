@@ -1,0 +1,543 @@
+================================================================================
+PROMPT_MASTER AGENT - SPECIFICATION & IMPLEMENTATION PLAN
+================================================================================
+
+AGENT NAME: prompt_master
+CREATED: 2025-11-16
+PURPOSE: Expert prompt engineering and multi-agent orchestration system
+
+================================================================================
+1. CORE MISSION
+================================================================================
+
+The prompt_master agent serves as the central intelligence for:
+- Analyzing and optimizing user prompts for maximum effectiveness
+- Discovering and managing all available AI agents in the system
+- Intelligently routing tasks to the most suitable agents
+- Orchestrating complex multi-agent workflows
+- Synthesizing results into cohesive, high-quality outputs
+
+================================================================================
+2. CAPABILITIES MATRIX
+================================================================================
+
+2.1 PROMPT ENGINEERING EXPERTISE
+--------------------------------
+- Analyze user intent and clarify ambiguous requests
+- Restructure prompts for clarity, precision, and completeness
+- Remove redundancy and strengthen core directives
+- Add necessary context and constraints
+- Tailor language for creative, technical, analytical, or operational tasks
+- Provide before/after comparisons with improvement explanations
+
+2.2 AGENT DISCOVERY & MANAGEMENT
+--------------------------------
+- Auto-detect all available custom agents in the system
+- Maintain capability matrix for each agent:
+  * Strengths and specializations
+  * Speed/performance characteristics
+  * Token efficiency
+  * Best use cases
+- Track agent availability and status
+- Monitor agent performance over time
+
+2.3 INTELLIGENT TASK DELEGATION
+--------------------------------
+- Decompose complex tasks into logical subtasks
+- Map subtasks to optimal agents based on:
+  * Accuracy requirements
+  * Speed requirements
+  * Domain expertise
+  * Resource availability
+- Execute parallel workflows when beneficial
+- Implement sequential workflows when dependencies exist
+- Handle agent failures with fallback strategies
+- Retry with refined prompts if outputs are insufficient
+
+2.4 OPTIMIZATION STRATEGIES
+--------------------------------
+- Prefer fast agents when accuracy is equivalent
+- Minimize token usage through:
+  * Concise prompt engineering
+  * Avoiding redundant instructions
+  * Caching reusable outputs
+- Batch similar operations when possible
+- Load-balance across available agents
+- Prioritize based on user urgency indicators
+
+2.5 META-REASONING & TRANSPARENCY
+--------------------------------
+- Explain agent selection rationale
+- Provide workflow visualization
+- Request clarification for ambiguous inputs
+- Suggest alternative approaches when beneficial
+- Learn from past executions to improve future routing
+- Maintain audit trail of decisions
+
+================================================================================
+3. INTEGRATION WITH EXISTING SYSTEM
+================================================================================
+
+3.1 CURRENT SYSTEM COMPONENTS
+------------------------------
+Based on repository analysis:
+- agent_orchestrator.py: Main orchestration engine
+- opencode_agent_startup.py: Interactive startup script
+- agents/routing_config.json: Persistent routing directives
+
+Current Agent Roster:
+- Gemini: Web/YouTube searches
+- Research: Research tasks
+- OpenCode: Coding tasks
+- Claude: Prompt optimization
+- Ollama: Local AI tasks
+
+3.2 PROMPT_MASTER POSITIONING
+------------------------------
+Role: META-ORCHESTRATOR (sits above current orchestrator)
+
+Workflow:
+User Request → prompt_master → Task Analysis → Prompt Optimization →
+Agent Selection → Orchestrator Delegation → Result Synthesis → User Response
+
+3.3 INTEGRATION POINTS
+------------------------------
+- Read from agents/routing_config.json for agent capabilities
+- Extend routing_config.json with prompt_master directives
+- Call agent_orchestrator.py for actual agent execution
+- Add prompt optimization layer before delegation
+- Implement result synthesis after agent completion
+
+================================================================================
+4. TECHNICAL IMPLEMENTATION
+================================================================================
+
+4.1 REQUIRED FILES
+------------------
+1. agents/prompt_master_agent.py
+   - Main agent implementation
+   - Prompt analysis and optimization logic
+   - Agent capability discovery
+   - Task decomposition engine
+
+2. agents/prompt_master_config.json
+   - Agent capability matrix
+   - Optimization rules
+   - Delegation strategies
+   - Performance metrics
+
+3. agents/prompt_templates/
+   - Template library for common prompt patterns
+   - Optimization ruleset
+   - Example transformations
+
+4. Integration updates:
+   - Modify agent_orchestrator.py to call prompt_master first
+   - Update routing_config.json with prompt_master rules
+
+4.2 CORE FUNCTIONS
+------------------
+
+analyze_prompt(user_input):
+    """
+    Analyze user prompt for:
+    - Intent clarity
+    - Missing context
+    - Ambiguities
+    - Improvement opportunities
+    """
+    return analysis_report
+
+optimize_prompt(original_prompt, analysis):
+    """
+    Rewrite prompt for maximum effectiveness:
+    - Add structure
+    - Clarify intent
+    - Specify constraints
+    - Remove ambiguity
+    """
+    return optimized_prompt, improvements_list
+
+discover_agents():
+    """
+    Scan system for available agents:
+    - Read routing_config.json
+    - Detect active agents
+    - Load capability profiles
+    """
+    return agent_registry
+
+decompose_task(optimized_prompt):
+    """
+    Break complex tasks into subtasks:
+    - Identify logical components
+    - Determine dependencies
+    - Assess parallelization opportunities
+    """
+    return subtask_list
+
+select_agents(subtask_list, agent_registry):
+    """
+    Match subtasks to optimal agents:
+    - Score each agent for each subtask
+    - Consider speed vs accuracy tradeoffs
+    - Respect user priorities
+    """
+    return delegation_plan
+
+execute_workflow(delegation_plan):
+    """
+    Coordinate multi-agent execution:
+    - Launch parallel tasks
+    - Manage sequential dependencies
+    - Monitor progress
+    - Handle failures
+    """
+    return raw_results
+
+synthesize_results(raw_results, original_intent):
+    """
+    Combine agent outputs into cohesive response:
+    - Remove redundancy
+    - Resolve conflicts
+    - Format for clarity
+    - Verify completeness
+    """
+    return final_response
+
+================================================================================
+5. CONFIGURATION STRUCTURE
+================================================================================
+
+5.1 AGENT CAPABILITY MATRIX (agents/prompt_master_config.json)
+---------------------------------------------------------------
+{
+  "agents": {
+    "gemini": {
+      "specializations": ["web_search", "youtube", "current_events"],
+      "speed": "fast",
+      "accuracy": "high",
+      "token_cost": "medium",
+      "best_for": ["research", "real_time_data", "video_content"]
+    },
+    "research": {
+      "specializations": ["deep_analysis", "synthesis", "reporting"],
+      "speed": "medium",
+      "accuracy": "very_high",
+      "token_cost": "high",
+      "best_for": ["comprehensive_research", "academic", "detailed_analysis"]
+    },
+    "opencode": {
+      "specializations": ["coding", "debugging", "technical_docs"],
+      "speed": "fast",
+      "accuracy": "high",
+      "token_cost": "medium",
+      "best_for": ["software_development", "code_review", "technical_writing"]
+    },
+    "claude": {
+      "specializations": ["prompt_optimization", "creative_writing", "analysis"],
+      "speed": "fast",
+      "accuracy": "high",
+      "token_cost": "medium",
+      "best_for": ["prompt_engineering", "content_creation", "reasoning"]
+    },
+    "ollama": {
+      "specializations": ["local_processing", "privacy", "offline"],
+      "speed": "very_fast",
+      "accuracy": "medium",
+      "token_cost": "low",
+      "best_for": ["local_tasks", "simple_queries", "quick_responses"]
+    }
+  },
+
+  "optimization_rules": {
+    "clarity_patterns": [
+      "Add specific success criteria",
+      "Define output format explicitly",
+      "Specify constraints and boundaries",
+      "Include relevant context"
+    ],
+    "efficiency_patterns": [
+      "Remove redundant instructions",
+      "Consolidate related requests",
+      "Use precise technical terminology",
+      "Avoid unnecessary elaboration"
+    ]
+  },
+
+  "delegation_strategies": {
+    "parallel_threshold": 2,
+    "max_parallel_agents": 5,
+    "retry_limit": 2,
+    "fallback_agent": "claude"
+  }
+}
+
+5.2 ROUTING DIRECTIVES (update to agents/routing_config.json)
+--------------------------------------------------------------
+Add:
+{
+  "prompt_master": {
+    "trigger_patterns": [
+      "optimize this prompt",
+      "improve this request",
+      "which agent should",
+      "route this task",
+      "multi-agent workflow"
+    ],
+    "always_process": true,
+    "priority": "highest"
+  }
+}
+
+================================================================================
+6. USAGE EXAMPLES
+================================================================================
+
+6.1 BASIC PROMPT OPTIMIZATION
+------------------------------
+User: "Find some info about marine batteries"
+
+prompt_master Process:
+1. Analyze: Vague, missing specifics
+2. Optimize: "Research 12V deep-cycle marine battery options suitable for
+   liveaboard sailboats, focusing on: capacity (200-400Ah range),
+   lifespan, charging requirements, and cost. Prioritize AGM or lithium
+   technologies. Format as comparison table."
+3. Route: → research agent (comprehensive analysis needed)
+4. Execute: Launch research agent with optimized prompt
+5. Deliver: Formatted results with explanation
+
+6.2 MULTI-AGENT WORKFLOW
+-------------------------
+User: "I need to install new fans, find options and create installation guide"
+
+prompt_master Process:
+1. Decompose:
+   - Subtask A: Research 12V marine fan options
+   - Subtask B: Create installation documentation
+2. Optimize prompts:
+   - A: "Search for 12V marine fans suitable for sailboat cabins..."
+   - B: "Create step-by-step installation guide for marine fans..."
+3. Select agents:
+   - A → gemini (web search for products)
+   - B → opencode (technical documentation)
+4. Execute: Launch both in parallel
+5. Synthesize: Combine product research with installation guide
+6. Deliver: Integrated document with fan options + installation steps
+
+6.3 COMPLEX ORCHESTRATION
+--------------------------
+User: "Help me plan electrical system upgrade for my Bristol 32"
+
+prompt_master Process:
+1. Analyze: Multi-faceted technical planning task
+2. Decompose:
+   - Current system assessment
+   - Power consumption calculation
+   - Component recommendations
+   - Wiring diagrams
+   - Installation checklist
+   - Cost estimates
+3. Optimize & route:
+   - gemini: Product research for components
+   - research: Electrical system design analysis
+   - opencode: Generate wiring diagrams & documentation
+   - claude: Synthesize recommendations
+4. Execute: Coordinate sequential + parallel execution
+5. Synthesize: Create comprehensive upgrade plan
+6. Deliver: Multi-section report with all components
+
+================================================================================
+7. OPERATIONAL WORKFLOW
+================================================================================
+
+7.1 STANDARD EXECUTION FLOW
+----------------------------
+┌─────────────────┐
+│  User Input     │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Intent Analysis │ ← Clarify ambiguities
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Prompt          │ ← Apply optimization rules
+│ Optimization    │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Task            │ ← Identify subtasks & dependencies
+│ Decomposition   │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Agent Selection │ ← Match capabilities to needs
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Workflow        │ ← Execute parallel/sequential
+│ Execution       │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Result          │ ← Combine & format outputs
+│ Synthesis       │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Quality Check   │ ← Verify completeness
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Deliver to User │
+└─────────────────┘
+
+7.2 ERROR HANDLING
+------------------
+- Agent unavailable → Use fallback agent
+- Low quality output → Retry with refined prompt
+- Partial failure → Complete with remaining agents
+- Complete failure → Escalate to user with explanation
+
+================================================================================
+8. PERFORMANCE METRICS
+================================================================================
+
+Track and optimize:
+- Prompt improvement score (complexity reduction, clarity gain)
+- Agent selection accuracy (successful task completion rate)
+- Workflow efficiency (time saved through parallelization)
+- Token efficiency (tokens used vs baseline)
+- User satisfaction (task completion quality)
+
+Log format:
+{
+  "timestamp": "2025-11-16T10:30:00Z",
+  "original_prompt": "...",
+  "optimized_prompt": "...",
+  "agents_used": ["gemini", "opencode"],
+  "execution_time": "45s",
+  "tokens_used": 3500,
+  "success": true,
+  "quality_score": 9.2
+}
+
+================================================================================
+9. IMPLEMENTATION PRIORITIES
+================================================================================
+
+PHASE 1 (MVP):
+- Basic prompt analysis and optimization
+- Agent discovery from routing_config.json
+- Simple task routing to single best agent
+- Result pass-through with minimal synthesis
+
+PHASE 2 (ORCHESTRATION):
+- Task decomposition for multi-step workflows
+- Multi-agent parallel execution
+- Result synthesis and formatting
+- Error handling and retries
+
+PHASE 3 (INTELLIGENCE):
+- Learning from execution history
+- Adaptive agent selection
+- Automatic prompt template generation
+- Performance optimization
+- Predictive routing
+
+PHASE 4 (ADVANCED):
+- Natural language workflow creation
+- Agent capability auto-discovery
+- Dynamic agent pool management
+- A/B testing of routing strategies
+- Continuous improvement loop
+
+================================================================================
+10. COMMAND LINE INTERFACE
+================================================================================
+
+10.1 BASIC USAGE
+----------------
+# Optimize a prompt
+python3 opencode_agent_startup.py --prompt-master "your task here"
+
+# Explicit multi-agent workflow
+python3 opencode_agent_startup.py --orchestrate "complex task"
+
+# Interactive mode with prompt_master enabled
+python3 opencode_agent_startup.py --interactive --use-prompt-master
+
+10.2 FLAGS
+----------
+--analyze-only          : Just analyze and optimize, don't execute
+--show-routing         : Display agent selection rationale
+--prefer-speed         : Optimize for speed over accuracy
+--prefer-accuracy      : Optimize for accuracy over speed
+--agents=agent1,agent2 : Restrict to specific agents
+--parallel-max=N       : Limit parallel agent executions
+--explain              : Provide detailed workflow explanation
+
+================================================================================
+11. SECURITY & SAFETY
+================================================================================
+
+Constraints:
+- Never execute code without user approval
+- Validate all agent outputs before synthesis
+- Maintain audit trail of all delegations
+- Respect agent-specific safety boundaries
+- Sanitize inputs to prevent injection attacks
+- Rate-limit agent calls to prevent resource exhaustion
+
+================================================================================
+12. MAINTENANCE & UPDATES
+================================================================================
+
+Regular tasks:
+- Update agent capability profiles as agents evolve
+- Refine optimization rules based on outcomes
+- Add new prompt templates for common patterns
+- Review and improve delegation strategies
+- Audit performance metrics monthly
+- Clean up outdated configurations
+
+================================================================================
+13. NEXT STEPS FOR IMPLEMENTATION
+================================================================================
+
+1. Create agents/prompt_master_agent.py with core functions
+2. Create agents/prompt_master_config.json with capability matrix
+3. Update agents/routing_config.json to include prompt_master
+4. Modify agent_orchestrator.py to integrate prompt_master
+5. Create prompt template library
+6. Add CLI flags to opencode_agent_startup.py
+7. Implement logging and metrics collection
+8. Create unit tests for each core function
+9. Document usage patterns and examples
+10. Deploy and monitor initial performance
+
+================================================================================
+END OF SPECIFICATION
+================================================================================
+
+This specification provides a complete blueprint for implementing the
+prompt_master agent as a meta-orchestrator that sits above the existing
+agent system, providing intelligent prompt optimization and multi-agent
+workflow coordination.
+
+The agent will transform user requests into highly optimized prompts,
+intelligently route tasks to the most capable agents, and synthesize
+results into cohesive, high-quality outputs.
+
+Implementation can begin with Phase 1 (MVP) and progressively add
+sophistication through Phases 2-4 as the system matures.
